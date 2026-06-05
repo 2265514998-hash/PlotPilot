@@ -36,10 +36,10 @@ export interface CheckoutResult {
 
 export const worldlineApi = {
   getGraph: (novelId: string) =>
-    apiClient.get<WorldlineGraph>(`/novels/${novelId}/worldline/graph`) as unknown as Promise<WorldlineGraph>,
+    apiClient.get<WorldlineGraph>(`/novels/${novelId}/worldline/graph`),
 
   listCheckpoints: (novelId: string) =>
-    apiClient.get<CheckpointNode[]>(`/novels/${novelId}/worldline/checkpoints`) as unknown as Promise<CheckpointNode[]>,
+    apiClient.get<CheckpointNode[]>(`/novels/${novelId}/worldline/checkpoints`),
 
   createCheckpoint: (novelId: string, body: {
     trigger_type?: string; name: string; description?: string; branch_name?: string
@@ -47,28 +47,28 @@ export const worldlineApi = {
     apiClient.post<{ checkpoint_id: string }>(
       `/novels/${novelId}/worldline/checkpoints`,
       body,
-    ) as unknown as Promise<{ checkpoint_id: string }>,
+    ),
 
   listBranches: (novelId: string) =>
-    apiClient.get<BranchInfo[]>(`/novels/${novelId}/worldline/branches`) as unknown as Promise<BranchInfo[]>,
+    apiClient.get<BranchInfo[]>(`/novels/${novelId}/worldline/branches`),
 
   createBranch: (novelId: string, body: { name: string; from_checkpoint_id: string; storyline_id?: string }) =>
     apiClient.post<{ branch_id: string }>(
       `/novels/${novelId}/worldline/branches`,
       body,
-    ) as unknown as Promise<{ branch_id: string }>,
+    ),
 
   checkout: (novelId: string, checkpointId: string) =>
     apiClient.post<CheckoutResult>(
       `/novels/${novelId}/worldline/checkpoints/${checkpointId}/checkout`,
       {},
-    ) as unknown as Promise<CheckoutResult>,
+    ),
 
   hardReset: (novelId: string, checkpointId: string) =>
     apiClient.post<CheckoutResult>(
       `/novels/${novelId}/worldline/checkpoints/${checkpointId}/hard-reset`,
       {},
-    ) as unknown as Promise<CheckoutResult>,
+    ),
 
   deleteCheckpoint: (novelId: string, checkpointId: string) =>
     apiClient.delete(`/novels/${novelId}/worldline/checkpoints/${checkpointId}`),
@@ -76,7 +76,7 @@ export const worldlineApi = {
   getBranchByStoryline: (novelId: string, storylineId: string) =>
     apiClient.get<BranchInfo | null>(
       `/novels/${novelId}/worldline/branches/by-storyline/${storylineId}`,
-    ) as unknown as Promise<BranchInfo | null>,
+    ),
 
   updateBranch: (
     novelId: string,
@@ -86,5 +86,5 @@ export const worldlineApi = {
     apiClient.put<BranchInfo>(
       `/novels/${novelId}/worldline/branches/${branchId}`,
       body,
-    ) as unknown as Promise<BranchInfo>,
+    ),
 }

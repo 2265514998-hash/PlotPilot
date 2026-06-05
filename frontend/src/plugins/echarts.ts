@@ -39,7 +39,6 @@ import {
   LegendPlainComponent
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import * as echarts from 'echarts'
 
 // Register components, charts, and renderer
 use([
@@ -81,7 +80,4 @@ use([
 
 export default function installECharts(app: App) {
   app.component('VChart', ECharts)
-  app.config.globalProperties.$echarts = echarts
 }
-
-export { echarts }

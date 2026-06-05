@@ -9,14 +9,17 @@
         class="ap-workspace__pane ap-workspace__pane--cockpit"
         aria-label="全托管驾驶"
       >
-        <AutopilotPanel
-          class="ap-workspace__cockpit-panel"
+        <AutopilotCockpitLayout
           :novel-id="novelId"
+          :chapters="cockpitChapters"
+          :current-chapter-id="cockpitCurrentChapterId"
           @status-change="onStatusChange"
           @chapter-content-update="onChapterContentUpdate"
           @chapter-chunk="onChapterChunk"
           @desk-refresh="onDeskRefresh"
           @beats-planned="onBeatsPlanned"
+          @chapter-metrics-refresh="onChapterMetricsRefresh"
+          @chapter-select="onCockpitChapterSelect"
         />
       </section>
 
@@ -52,13 +55,22 @@ import { ref, toRef } from 'vue'
 import { useAutopilotWorkspaceStore } from '@/stores/autopilotWorkspaceStore'
 import { useDAGSSE } from '@/composables/useDAGSSE'
 import AutopilotShellNav from './AutopilotShellNav.vue'
-import AutopilotPanel from './AutopilotPanel.vue'
+import AutopilotCockpitLayout from './AutopilotCockpitLayout.vue'
+import type { CockpitChapterItem } from './AutopilotCockpitChapterRail.vue'
 import AutopilotMetricsDashboard from './AutopilotMetricsDashboard.vue'
 import AutopilotOperationsView from './AutopilotOperationsView.vue'
 
-const props = defineProps<{
-  novelId: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    novelId: string
+    cockpitChapters?: CockpitChapterItem[]
+    cockpitCurrentChapterId?: number | null
+  }>(),
+  {
+    cockpitChapters: () => [],
+    cockpitCurrentChapterId: null,
+  },
+)
 
 const emit = defineEmits<{
   'status-change': [status: Record<string, unknown>]
@@ -67,6 +79,7 @@ const emit = defineEmits<{
   'desk-refresh': []
   'beats-planned': [payload: { chapterNumber: number; beats: Array<Record<string, unknown>> }]
   'chapter-metrics-refresh': []
+  'chapter-select': [chapterId: number, title: string]
 }>()
 
 const workspace = useAutopilotWorkspaceStore()
@@ -107,12 +120,17 @@ function onDeskRefresh() {
 function onBeatsPlanned(payload: { chapterNumber: number; beats: Array<Record<string, unknown>> }) {
   emit('beats-planned', payload)
 }
+
+function onCockpitChapterSelect(chapterId: number, title: string) {
+  emit('chapter-select', chapterId, title)
+}
 </script>
 
 <style scoped>
 .ap-workspace {
   flex: 1;
   min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -136,13 +154,9 @@ function onBeatsPlanned(payload: { chapterNumber: number; beats: Array<Record<st
 }
 
 .ap-workspace__pane--cockpit {
-  overflow-y: auto;
+  overflow: hidden;
   background: var(--app-page-bg);
-}
-
-.ap-workspace__cockpit-panel {
-  flex-shrink: 0;
-  margin: 12px 16px 16px;
+  padding: 10px 12px 12px;
 }
 
 .ap-workspace__pane--ops {

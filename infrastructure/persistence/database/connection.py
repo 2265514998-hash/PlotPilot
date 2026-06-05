@@ -360,7 +360,7 @@ def _apply_migration_files(conn: sqlite3.Connection) -> None:
                         (migration_file,)
                     )
                     conn.commit()
-                except:
+                except Exception:
                     pass
                 logger.debug("Migration %s already applied: %s", migration_file, e)
             elif "no such function" in err_str:
@@ -371,7 +371,7 @@ def _apply_migration_files(conn: sqlite3.Connection) -> None:
                         (migration_file,)
                     )
                     conn.commit()
-                except:
+                except Exception:
                     pass
                 logger.warning(
                     "Migration %s uses unsupported SQLite function, marking as applied: %s",
@@ -697,15 +697,23 @@ class DatabaseConnection:
 
 # 全局数据库实例
 _db_instance: Optional[DatabaseConnection] = None
+_db_init_lock = threading.Lock()
 
 # 全局连接池实例
 _connection_pool_instance: Optional["SQLiteConnectionPool"] = None
 
 
 def get_database(db_path: Optional[str] = None) -> DatabaseConnection:
-    """获取全局数据库实例（默认使用仓库内 data/plotpilot.db 绝对路径）。"""
+    """获取全局数据库实例（默认使用仓库内 data/plotpilot.db 绝对路径）。
+
+    使用双重检查锁定保证线程安全的单例初始化。
+    """
     global _db_instance
-    if _db_instance is None:
+    if _db_instance is not None:
+        return _db_instance
+    with _db_init_lock:
+        if _db_instance is not None:
+            return _db_instance
         if db_path is None:
             from application.paths import get_db_path
 

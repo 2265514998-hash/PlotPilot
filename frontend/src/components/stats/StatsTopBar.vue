@@ -13,6 +13,10 @@
       <div class="ai-hidden-entries" aria-hidden="true">
         <GlobalLLMEntryButton ref="llmRef" appearance="topbar" />
         <PromptPlazaEntryButton ref="plazaRef" appearance="topbar" />
+        <LocalModelConnectModal
+          ref="localModelRef"
+          @open-llm-console="openLlmConsole"
+        />
       </div>
 
       <!-- 可见的统一触发按钮 -->
@@ -77,17 +81,42 @@
           <path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/>
         </svg>
       </div>
+
+      <!-- 叙事健康按钮 -->
+      <n-tooltip :show-arrow="false" placement="bottom">
+        <template #trigger>
+          <div class="health-trigger" @click="healthDrawerVisible = true" role="button" aria-label="叙事健康">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+              <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+          </div>
+        </template>
+        叙事健康仪表盘
+      </n-tooltip>
     </div>
+
+    <!-- 叙事健康侧边抽屉 -->
+    <n-drawer v-model:show="healthDrawerVisible" :width="400" placement="right" display-directive="if">
+      <n-drawer-content title="叙事健康" closable>
+        <NarrativeHealthPanel
+          :novel-id="novelId"
+          :visible="healthDrawerVisible"
+        />
+      </n-drawer-content>
+    </n-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { NTooltip, NSpin, NDropdown, NButton, useMessage } from 'naive-ui'
+import { NTooltip, NSpin, NDropdown, NButton, NDrawer, NDrawerContent, useMessage } from 'naive-ui'
 import { useStatsStore } from '@/stores/statsStore'
 import { novelApi } from '@/api/novel'
 import GlobalLLMEntryButton from '@/components/global/GlobalLLMEntryButton.vue'
 import PromptPlazaEntryButton from '@/components/global/PromptPlazaEntryButton.vue'
+import LocalModelConnectModal from '@/components/global/LocalModelConnectModal.vue'
+import { useLocalModelStore } from '@/stores/localModelStore'
+import NarrativeHealthPanel from '@/components/workbench/NarrativeHealthPanel.vue'
 
 const props = defineProps<{
   slug: string
@@ -99,18 +128,49 @@ defineEmits<{
 
 const message = useMessage()
 
-// AI 工具组件引用（用于以编程方式触发各组件内部按钮）
-const llmRef = ref<{ $el: HTMLElement } | null>(null)
-const plazaRef = ref<{ $el: HTMLElement } | null>(null)
+// 叙事健康仪表盘
+const healthDrawerVisible = ref(false)
+const novelId = computed(() => props.slug)
 
-const aiToolsOptions = [
-  { label: '⚙️ AI 控制台', key: 'llm' },
-  { label: '✦ 提示词广场', key: 'plaza' },
-]
+// AI 工具组件引用（用于以编程方式触发各组件内部按钮）
+const llmRef = ref<{ $el: HTMLElement; openPanel?: () => void } | null>(null)
+const plazaRef = ref<{ $el: HTMLElement } | null>(null)
+const localModelRef = ref<{ open: () => void; connectAndOpen?: () => Promise<void> } | null>(null)
+const localModelStore = useLocalModelStore()
+
+function openLlmConsole() {
+  if (llmRef.value?.openPanel) {
+    llmRef.value.openPanel()
+    return
+  }
+  llmRef.value?.$el?.querySelector('button')?.click()
+}
+
+const aiToolsOptions = computed(() => [
+  {
+    label: localModelStore.hasReachableLocalLlm
+      ? `连接本地 AI（${localModelStore.primaryReachable?.label || '已探测'}）`
+      : '连接本地 AI',
+    key: 'local-model-auto',
+  },
+  { label: 'AI 控制台', key: 'llm' },
+  { label: '本地 AI 设置', key: 'local-model' },
+  { label: '提示词广场', key: 'plaza' },
+])
+
+async function quickConnectAndOpen() {
+  const ok = await localModelStore.connectLocalDirect({ quiet: false, force: true })
+  if (ok) openLlmConsole()
+  else localModelRef.value?.open()
+}
 
 function handleAiToolSelect(key: string) {
   if (key === 'llm') {
-    llmRef.value?.$el?.querySelector('button')?.click()
+    openLlmConsole()
+  } else if (key === 'local-model') {
+    localModelRef.value?.open()
+  } else if (key === 'local-model-auto') {
+    void quickConnectAndOpen()
   } else if (key === 'plaza') {
     plazaRef.value?.$el?.querySelector('button')?.click()
   }
@@ -263,7 +323,10 @@ async function retryLoad() {
   await loadStats()
 }
 
-onMounted(loadStats)
+onMounted(() => {
+  localModelStore.hydrateFromCache()
+  void loadStats()
+})
 </script>
 
 <style scoped>
@@ -290,6 +353,11 @@ onMounted(loadStats)
   box-shadow:
     var(--app-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.08)),
     0 4px 16px var(--color-brand-border, rgba(79, 70, 229, 0.08));
+}
+
+.local-llm-quick-btn {
+  flex-shrink: 0;
+  font-weight: 600;
 }
 
 /* 左侧：AI 控制台入口 */
@@ -456,6 +524,26 @@ onMounted(loadStats)
   opacity: 1;
   background: rgba(255, 255, 255, 0.16);
   transform: rotate(45deg);
+}
+
+.health-trigger {
+  flex-shrink: 0;
+  width: var(--plotpilot-topbar-hit-md);
+  height: var(--plotpilot-topbar-hit-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: all 0.18s ease;
+  border-radius: var(--app-radius-sm);
+  color: inherit;
+}
+
+.health-trigger:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.16);
+  color: #10b981;
 }
 
 .dropdown-item-icon {

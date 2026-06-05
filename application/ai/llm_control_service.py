@@ -404,7 +404,12 @@ class LLMControlService:
                 reason='未找到任何 LLM 配置',
             )
 
-        if not profile.api_key.strip() or not profile.model.strip():
+        from application.ai.local_llm_utils import effective_local_api_key
+
+        api_key = effective_local_api_key(
+            profile.api_key, profile.base_url or '', profile.protocol or 'openai'
+        )
+        if not api_key.strip() or not profile.model.strip():
             return LLMRuntimeSummary(
                 source='mock',
                 active_profile_id=profile.id,
@@ -431,8 +436,13 @@ class LLMControlService:
         profile: LLMProfile,
         llm_service_factory: Callable[[LLMProfile], LLMService],
     ) -> LLMTestResult:
+        from application.ai.local_llm_utils import effective_local_api_key
+
         resolved = self.resolve_profile(profile)
-        if not resolved.api_key.strip() or not resolved.model.strip():
+        api_key = effective_local_api_key(
+            resolved.api_key, resolved.base_url or '', resolved.protocol or 'openai'
+        )
+        if not api_key.strip() or not resolved.model.strip():
             return LLMTestResult(
                 ok=False,
                 provider_label=resolved.name,
@@ -440,6 +450,9 @@ class LLMControlService:
                 latency_ms=0,
                 error='请先填写 API Key 与模型名后再测试',
             )
+        resolved = LLMProfile(
+            **{**resolved.model_dump(), 'api_key': api_key},
+        )
         started = perf_counter()
         try:
             llm_service = llm_service_factory(resolved)

@@ -133,7 +133,7 @@ export async function saveChapterDraft(
   return apiClient.post<ChapterDraftDTO>(
     `/novels/${novelId}/chapters/${chapterNumber}/drafts`,
     { source },
-  ) as unknown as Promise<ChapterDraftDTO>
+  )
 }
 
 /**
@@ -146,7 +146,7 @@ export async function listChapterDrafts(
 ): Promise<ChapterDraftDTO[]> {
   return apiClient.get<ChapterDraftDTO[]>(
     `/novels/${novelId}/chapters/${chapterNumber}/drafts`,
-  ) as unknown as Promise<ChapterDraftDTO[]>
+  )
 }
 
 export interface SceneDirectorAnalysis {
@@ -171,7 +171,7 @@ export async function analyzeScene(
   return apiClient.post<SceneDirectorAnalysis>(
     `/novels/${novelId}/scene-director/analyze`,
     { chapter_number: chapterNumber, outline }
-  ) as unknown as Promise<SceneDirectorAnalysis>
+  )
 }
 
 /** 与 `interfaces/api/v1/generation.py` GenerateChapterResponse 对齐 */
@@ -415,63 +415,38 @@ export async function consumeHostedWriteStream(
     signal?: AbortSignal
   }
 ): Promise<void> {
-  const res = await fetch(resolveHttpUrl(`/api/v1/novels/${novelId}/hosted-write-stream`), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: handlers.signal,
-  })
-  if (!res.ok || !res.body) {
-    const t = await res.text().catch(() => '')
-    handlers.onError?.(t || `HTTP ${res.status}`)
-    return
-  }
-  const reader = res.body.getReader()
-  const dec = new TextDecoder()
-  let buf = ''
-  try {
-    const drainFrames = (): boolean => {
-      let sep: number
-      while ((sep = buf.indexOf('\n\n')) >= 0) {
-        const block = buf.slice(0, sep)
-        buf = buf.slice(sep + 2)
-        for (const line of block.split('\n')) {
-          const raw = parseSseDataLine(line)
-          if (!raw || typeof raw !== 'object' || raw === null) continue
-          const o = raw as Record<string, unknown>
-          handlers.onEvent?.(o)
-          if (o.type === 'error') {
-            handlers.onError?.(String(o.message ?? 'error'))
-            return true
-          }
+  const { consumeSseStream } = await import('@/utils/sseStream')
+  return new Promise<void>((resolve) => {
+    consumeSseStream({
+      url: resolveHttpUrl(`/api/v1/novels/${novelId}/hosted-write-stream`),
+      requestInit: {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: handlers.signal,
+      },
+      onFrame({ parsed }) {
+        if (!parsed || typeof parsed !== 'object') return
+        const o = parsed as Record<string, unknown>
+        handlers.onEvent?.(o)
+        if (o.type === 'error') {
+          handlers.onError?.(String(o.message ?? 'error'))
         }
-      }
-      return false
-    }
-    while (true) {
-      const { done, value } = await reader.read()
-      if (value) buf += dec.decode(value, { stream: true })
-      if (drainFrames()) return
-      if (done) {
-        buf += dec.decode()
-        drainFrames()
-        break
-      }
-    }
-  } catch (e: unknown) {
-    if (e instanceof Error && e.name === 'AbortError') return
-    handlers.onError?.(e instanceof Error ? e.message : '流式连接失败')
-  }
+      },
+      onError(err) { handlers.onError?.(err.message) },
+      onDone() { resolve() },
+    })
+  })
 }
 
 export const workflowApi = {
   /** GET /api/v1/novels/{novel_id}/storylines */
   getStorylines: (novelId: string) =>
-    apiClient.get<StorylineDTO[]>(`/novels/${novelId}/storylines`) as unknown as Promise<StorylineDTO[]>,
+    apiClient.get<StorylineDTO[]>(`/novels/${novelId}/storylines`),
 
   /** GET /api/v1/novels/{novel_id}/storylines/graph-data (Git Graph 全量数据) */
   getStorylineGraphData: (novelId: string) =>
-    apiClient.get<StorylineGraphDataDTO>(`/novels/${novelId}/storylines/graph-data`) as unknown as Promise<StorylineGraphDataDTO>,
+    apiClient.get<StorylineGraphDataDTO>(`/novels/${novelId}/storylines/graph-data`),
 
   /** POST /api/v1/novels/{novel_id}/setup/suggest-main-plot-options（单次 LLM；引导页默认 400s） */
   suggestMainPlotOptions: (novelId: string) =>
@@ -479,7 +454,7 @@ export const workflowApi = {
       `/novels/${novelId}/setup/suggest-main-plot-options`,
       {},
       { timeout: WIZARD_STEP_TIMEOUT_MS }
-    ) as unknown as Promise<{ plot_options: MainPlotOptionDTO[] }>,
+    ),
 
   /** POST /api/v1/novels/{novel_id}/storylines */
   createStoryline: (
@@ -493,31 +468,31 @@ export const workflowApi = {
       name?: string
       description?: string
     }
-  ) => apiClient.post<StorylineDTO>(`/novels/${novelId}/storylines`, data) as unknown as Promise<StorylineDTO>,
+  ) => apiClient.post<StorylineDTO>(`/novels/${novelId}/storylines`, data),
 
   /** PUT /api/v1/novels/{novel_id}/storylines/{storyline_id} */
   updateStoryline: (novelId: string, storylineId: string, data: Partial<{ storyline_type: string; estimated_chapter_start: number; estimated_chapter_end: number; status: string }>) =>
-    apiClient.put<StorylineDTO>(`/novels/${novelId}/storylines/${storylineId}`, data) as unknown as Promise<StorylineDTO>,
+    apiClient.put<StorylineDTO>(`/novels/${novelId}/storylines/${storylineId}`, data),
 
   /** DELETE /api/v1/novels/{novel_id}/storylines/{storyline_id} */
   deleteStoryline: (novelId: string, storylineId: string) =>
-    apiClient.delete(`/novels/${novelId}/storylines/${storylineId}`) as unknown as Promise<void>,
+    apiClient.delete(`/novels/${novelId}/storylines/${storylineId}`),
 
   /** GET /api/v1/novels/{novel_id}/plot-arc */
   getPlotArc: (novelId: string) =>
-    apiClient.get<PlotArcDTO>(`/novels/${novelId}/plot-arc`) as unknown as Promise<PlotArcDTO>,
+    apiClient.get<PlotArcDTO>(`/novels/${novelId}/plot-arc`),
 
   /** POST /api/v1/novels/{novel_id}/plot-arc（body 含 key_points 等，见后端 CreatePlotArcRequest） */
   createPlotArc: (novelId: string, data: { key_points: PlotPointDTO[] }) =>
-    apiClient.post<PlotArcDTO>(`/novels/${novelId}/plot-arc`, data) as unknown as Promise<PlotArcDTO>,
+    apiClient.post<PlotArcDTO>(`/novels/${novelId}/plot-arc`, data),
 
   /** GET /api/v1/jobs/{job_id} — JobStatusIndicator 使用 */
   getJobStatus: (jobId: string) =>
-    apiClient.get<JobStatusResponse>(`/jobs/${jobId}`) as unknown as Promise<JobStatusResponse>,
+    apiClient.get<JobStatusResponse>(`/jobs/${jobId}`),
 
   /** POST /api/v1/jobs/{job_id}/cancel — JobStatusIndicator 使用 */
   cancelJob: (jobId: string) =>
-    apiClient.post<{ ok: boolean }>(`/jobs/${jobId}/cancel`, {}) as unknown as Promise<{ ok: boolean }>,
+    apiClient.post<{ ok: boolean }>(`/jobs/${jobId}/cancel`, {}),
 
   // ============================================================================
   // 新增：大纲规划、章节审稿、续写大纲
@@ -539,11 +514,7 @@ export const workflowApi = {
       chapter_number: number
       suggestions: string[]
       score: number
-    }>(`/novels/${novelId}/chapters/${chapterNumber}/review`, {}) as unknown as Promise<{
-      chapter_number: number
-      suggestions: string[]
-      score: number
-    }>,
+    }>(`/novels/${novelId}/chapters/${chapterNumber}/review`, {}),
 
   /** POST /api/v1/novels/{novel_id}/outline/extend */
   extendOutline: (novelId: string, fromChapter: number, count = 5) =>
@@ -590,20 +561,20 @@ export async function retrieveContext(
       max_tokens: maxTokens,
       scene_director_result: sceneDirectorResult,
     }
-  ) as unknown as Promise<ContextPreviewResult>
+  )
 }
 
 export const confluenceApi = {
   list(slug: string): Promise<ConfluencePointDTO[]> {
-    return apiClient.get<ConfluencePointDTO[]>(`/novels/${slug}/confluence-points`) as unknown as Promise<ConfluencePointDTO[]>
+    return apiClient.get<ConfluencePointDTO[]>(`/novels/${slug}/confluence-points`)
   },
   create(slug: string, body: ConfluencePointCreate): Promise<ConfluencePointDTO> {
-    return apiClient.post<ConfluencePointDTO>(`/novels/${slug}/confluence-points`, body) as unknown as Promise<ConfluencePointDTO>
+    return apiClient.post<ConfluencePointDTO>(`/novels/${slug}/confluence-points`, body)
   },
   update(slug: string, id: string, body: ConfluencePointUpdate): Promise<ConfluencePointDTO> {
-    return apiClient.patch<ConfluencePointDTO>(`/novels/${slug}/confluence-points/${id}`, body) as unknown as Promise<ConfluencePointDTO>
+    return apiClient.patch<ConfluencePointDTO>(`/novels/${slug}/confluence-points/${id}`, body)
   },
   delete(slug: string, id: string): Promise<void> {
-    return apiClient.delete<void>(`/novels/${slug}/confluence-points/${id}`) as unknown as Promise<void>
+    return apiClient.delete<void>(`/novels/${slug}/confluence-points/${id}`)
   },
 }

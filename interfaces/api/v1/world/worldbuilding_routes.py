@@ -3,7 +3,7 @@ API routes for Worldbuilding
 """
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
 
@@ -89,7 +89,16 @@ def get_worldbuilding(
 
     if wb_entity is None:
         if not worldbuilding_slices_nonempty(bible_slices):
-            raise HTTPException(status_code=404, detail="Worldbuilding not found")
+            # 新建/本地导入的小说尚无世界观：返回空骨架，避免前端 404 诊断噪音
+            display = project_slices_to_legacy_api_shape({})
+            now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+            return {
+                "id": f"pending-{slug}",
+                "novel_id": slug,
+                **display,
+                "created_at": now,
+                "updated_at": now,
+            }
 
         display = project_slices_to_legacy_api_shape(bible_slices)
         now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")

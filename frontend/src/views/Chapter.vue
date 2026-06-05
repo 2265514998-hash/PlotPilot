@@ -47,13 +47,10 @@
     <n-split direction="horizontal" :default-size="0.72" :min="0.55" :max="0.88">
       <template #1>
         <div class="editor-area">
-          <n-input
-            v-model:value="content"
-            type="textarea"
-            class="content-editor"
-            placeholder="开始写作…&#10;&#10;Ctrl+S 保存 · 自动保存约 30 秒"
-            @update:value="onInput"
-            :autosize="{ minRows: 22 }"
+          <TiptapEditor
+            v-model="content"
+            @save="saveContent"
+            :placeholder="'开始写作…\n\nCtrl+S 保存 · 自动保存约 30 秒'"
           />
           <div class="editor-footer">
             <n-space>
@@ -222,6 +219,7 @@ import DOMPurify from 'dompurify'
 import { chapterApi } from '../api/chapter'
 import { knowledgeGraphApi, type InferenceFactBundle } from '../api/knowledgeGraph'
 import { useStatsStore } from '../stores/statsStore'
+import TiptapEditor from '../components/editor/TiptapEditor.vue'
 
 // Status mapping: old API (pending/ok/revise) <-> new API (draft/reviewed/approved)
 const statusToNew = (oldStatus: string): string => {
@@ -282,6 +280,15 @@ watch(chapterId, (newId) => {
 }, { immediate: true })
 
 const content = ref('')
+
+// TiptapEditor 通过 update:modelValue 更新 content，触发自动保存
+watch(content, () => {
+  saveStatus.value = 'unsaved'
+  if (saveTimer.value) clearTimeout(saveTimer.value)
+  saveTimer.value = window.setTimeout(() => {
+    void saveContent()
+  }, 30000)
+})
 const saving = ref(false)
 const saveStatus = ref<'unsaved' | 'saving' | 'saved'>('saved')
 const lastSaveTime = ref('')

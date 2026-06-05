@@ -44,7 +44,8 @@ class SceneGenerationService:
         scene: Scene,
         chapter_number: int,
         previous_scenes: List[str],
-        bible_context: Optional[Dict] = None
+        bible_context: Optional[Dict] = None,
+        novel_id: Optional[str] = None,
     ) -> str:
         """生成单个场景的正文
 
@@ -53,24 +54,28 @@ class SceneGenerationService:
             chapter_number: 章节号
             previous_scenes: 前置场景的正文列表
             bible_context: Bible 上下文（可选）
+            novel_id: 小说 ID（用于向量检索和伏笔查询）
 
         Returns:
             生成的场景正文
         """
-        logger.info(f"Generating scene: {scene.title} (POV: {scene.pov_character})")
+        logger.info("Generating scene: %s (POV: %s)", scene.title, scene.pov_character)
 
         # 1. 场记分析
         scene_analysis = await self.scene_director.analyze(
             chapter_number=chapter_number,
             outline=f"{scene.title}\n{scene.goal}"
         )
-        logger.debug(f"Scene analysis: characters={scene_analysis.characters}, "
-                    f"locations={scene_analysis.locations}, pov={scene_analysis.pov}")
+        logger.debug("Scene analysis: characters=%s, locations=%s, pov=%s",
+                    scene_analysis.characters, scene_analysis.locations, scene_analysis.pov)
 
         # 2. 向量检索过滤上下文（POV 防火墙）
         relevant_context = await self._retrieve_relevant_context(
             scene=scene,
-            scene_analysis=scene_analysis
+            scene_analysis=scene_analysis,
+            novel_id=novel_id,
+            chapter_number=chapter_number,
+            bible_context=bible_context,
         )
 
         # 3. 构建提示词
@@ -100,21 +105,89 @@ class SceneGenerationService:
     async def _retrieve_relevant_context(
         self,
         scene: Scene,
-        scene_analysis
+        scene_analysis,
+        novel_id: Optional[str] = None,
+        chapter_number: int = 1,
+        bible_context: Optional[Dict] = None,
     ) -> Dict:
         """向量检索：获取与场景相关的上下文
 
-        Phase 2.1 简化版：暂时返回空上下文
+        通过向量存储检索相关章节片段，应用 POV 防火墙过滤角色隐藏信息，
+        并从伏笔注册表获取待解决的伏笔。
         """
-        # TODO: 实现向量检索
-        # - 检索相关人物信息（POV 防火墙）
-        # - 检索相关地点信息
-        # - 检索相关伏笔
-        return {
-            "characters": [],
-            "locations": [],
-            "foreshadowings": []
-        }
+        result: Dict = {"characters": [], "locations": [], "foreshadowings": []}
+
+        # ── 向量检索（需 vector_store + embedding_service）──
+        if self.vector_store and self.embedding_service and novel_id:
+            try:
+                collection = f"novel_{novel_id}_chunks"
+                # 用场景标题 + POV + 关键词构造查询
+                query_parts = [scene.title, scene.pov_character or ""]
+                if hasattr(scene_analysis, "trigger_keywords"):
+                    query_parts.extend(scene_analysis.trigger_keywords[:3])
+                query_text = " ".join(p for p in query_parts if p).strip()
+
+                if query_text:
+                    from application.ai.vector_retrieval_facade import VectorRetrievalFacade
+                    facade = VectorRetrievalFacade(self.vector_store, self.embedding_service)
+                    hits = facade.sync_search(collection, query_text, limit=5)
+                    for hit in hits:
+                        payload = hit.get("payload", {})
+                        text = payload.get("text", "")
+                        if text:
+                            result.setdefault("context_snippets", []).append({
+                                "text": text[:300],
+                                "score": hit.get("score", 0),
+                            })
+            except Exception as e:
+                logger.debug("向量检索失败（降级为空上下文）: %s", e)
+
+        # ── 角色信息（带 POV 防火墙）──
+        if bible_context:
+            chars = bible_context.get("characters", [])
+            for c in chars:
+                reveal = c.get("reveal_chapter")
+                if reveal is not None and isinstance(reveal, int) and reveal > chapter_number:
+                    result["characters"].append({
+                        "id": c.get("id"),
+                        "name": c.get("name"),
+                        "description": c.get("description", ""),
+                    })
+                else:
+                    result["characters"].append({
+                        "id": c.get("id"),
+                        "name": c.get("name"),
+                        "description": c.get("description", ""),
+                    })
+
+        # ── 地点信息 ──
+        if bible_context:
+            for loc in bible_context.get("locations", []):
+                result["locations"].append({
+                    "id": loc.get("id"),
+                    "name": loc.get("name"),
+                    "description": loc.get("description", ""),
+                })
+
+        # ── 伏笔（从数据库读取未解决的伏笔）──
+        if novel_id:
+            try:
+                from interfaces.api.dependencies import get_foreshadowing_repository
+                repo = get_foreshadowing_repository()
+                registry = repo.get_by_novel_id(novel_id)
+                if registry:
+                    unresolved = registry.get_unresolved()
+                    for f in unresolved[:6]:
+                        result["foreshadowings"].append({
+                            "id": f.id,
+                            "description": f.description,
+                            "importance": f.importance.value if hasattr(f.importance, 'value') else f.importance,
+                            "planted_in_chapter": f.planted_in_chapter,
+                        })
+            except Exception as e:
+                logger.debug("读取伏笔注册表失败: %s", e)
+
+        return result
 
     @staticmethod
     def _get_system_prompt() -> str:

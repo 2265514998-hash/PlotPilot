@@ -51,12 +51,12 @@ export const sandboxApi = {
     return apiClient.get(
       `/novels/${novelId}/sandbox/dialogue-whitelist`,
       { params: { ...(chapterNumber ? { chapter_number: chapterNumber } : {}), ...(speaker ? { speaker } : {}) } }
-    ) as unknown as Promise<DialogueWhitelistResponse>
+    )
   },
 
   /** GET /api/v1/novels/{novel_id}/sandbox/character/{character_id}/anchor */
   getCharacterAnchor(novelId: string, characterId: string): Promise<CharacterAnchor> {
-    return apiClient.get(`/novels/${novelId}/sandbox/character/${characterId}/anchor`) as unknown as Promise<CharacterAnchor>
+    return apiClient.get(`/novels/${novelId}/sandbox/character/${characterId}/anchor`)
   },
 
   /** PATCH /api/v1/novels/{novel_id}/sandbox/character/{character_id}/anchor */
@@ -68,11 +68,11 @@ export const sandboxApi = {
     return apiClient.patch(
       `/novels/${novelId}/sandbox/character/${characterId}/anchor`,
       body
-    ) as unknown as Promise<CharacterAnchor>
+    )
   },
 
   /** POST /api/v1/novels/sandbox/generate-dialogue */
   generateDialogue(request: GenerateDialogueRequest): Promise<GenerateDialogueResponse> {
-    return apiClient.post('/novels/sandbox/generate-dialogue', request) as unknown as Promise<GenerateDialogueResponse>
+    return apiClient.post('/novels/sandbox/generate-dialogue', request)
   },
 }

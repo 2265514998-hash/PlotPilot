@@ -49,11 +49,11 @@ async def http_exception_handler(request: Request, exc) -> JSONResponse:
 
     # Log the error at appropriate level
     if status_code >= 500:
-        logger.error(f"HTTP {status_code} - {detail}")
+        logger.error("HTTP %d - %s", status_code, detail)
     elif status_code >= 400:
-        logger.warning(f"HTTP {status_code} - {detail}")
+        logger.warning("HTTP %d - %s", status_code, detail)
     else:
-        logger.info(f"HTTP {status_code} - {detail}")
+        logger.info("HTTP %d - %s", status_code, detail)
 
     error_response = ErrorResponse(
         message=detail,
@@ -92,9 +92,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         details=field_errors
     )
 
-    logger.warning(f"Validation error: {len(field_errors)} field(s)")
+    logger.warning("Validation error: %d field(s)", len(field_errors))
     for field_error in field_errors:
-        logger.debug(f"  - {field_error['field']}: {field_error['message']}")
+        logger.debug("  - %s: %s", field_error['field'], field_error['message'])
 
     return JSONResponse(
         status_code=HTTP_422_STATUS,
@@ -112,13 +112,11 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
     Returns:
         JSONResponse with unified error format
     """
-    error_message = str(exc) if exc else "An unexpected error occurred"
-
-    # Log the error at error level
-    logger.exception(f"Unhandled exception: {error_message}")
+    # 内部错误详情仅写日志，不暴露给客户端（防止泄露栈信息或内部实现细节）
+    logger.exception("Unhandled exception: %s", exc)
 
     error_response = ErrorResponse(
-        message=error_message,
+        message="服务器内部错误，请稍后重试",
         code="INTERNAL_ERROR"
     )
 

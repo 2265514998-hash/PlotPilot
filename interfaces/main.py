@@ -2,6 +2,8 @@
 
 提供 RESTful API 接口。
 """
+from __future__ import annotations
+
 # 必须在任何 HuggingFace/Transformers 导入前设置离线模式
 import os
 os.environ['HF_HUB_OFFLINE'] = '1'
@@ -78,7 +80,7 @@ from interfaces.api.v1.prop import prop_routes
 from interfaces.api.v1.audit import chapter_review_routes, macro_refactor, chapter_element_routes
 
 # Analyst module
-from interfaces.api.v1.analyst import voice, narrative_state, foreshadow_ledger
+from interfaces.api.v1.analyst import voice, narrative_state, foreshadow_ledger, narrative_health
 
 # System module (internal tooling)
 from interfaces.api.v1 import system as system_routes
@@ -166,8 +168,24 @@ async def startup_event():
     logger.info("✅ FastAPI application started successfully")
     logger.info(f"📊 Registered {len(app.routes)} routes")
 
-    # Windows: 启动前清理上次可能残留的进程
-    if os.name == "nt":
+    # 从 performance.yaml 读取 busy_timeout 并覆盖默认值
+    try:
+        from application.core.config.config_loader import get_config
+        from infrastructure.persistence.database.sqlite_pragmas import set_busy_timeout
+        cfg = get_config()
+        yaml_timeout = cfg.database.connection_pool.busy_timeout
+        if yaml_timeout and isinstance(yaml_timeout, (int, float)):
+            set_busy_timeout(int(yaml_timeout))
+            logger.info("⏱️ busy_timeout 从配置加载: %d ms", int(yaml_timeout))
+    except Exception as e:
+        logger.debug("未从配置加载 busy_timeout，使用默认值: %s", e)
+
+    # Windows: 启动前清理上次可能残留的进程（开发多实例时可用 PLOTPILOT_SKIP_PROCESS_CLEANUP=1 跳过）
+    if os.name == "nt" and os.getenv("PLOTPILOT_SKIP_PROCESS_CLEANUP", "").lower() not in (
+        "1",
+        "true",
+        "yes",
+    ):
         logger.info("🧹 Windows 启动前检查残留进程...")
         _cleanup_orphan_python_processes()
 
@@ -947,6 +965,8 @@ app.include_router(taxonomy_routes.router,          prefix=_V1)
 app.include_router(chapters.router,                 prefix="/api/v1/novels")  # chapters 路由无自身 prefix，挂在 /novels 下
 app.include_router(manuscript_entity_routes.router, prefix="/api/v1/novels")
 app.include_router(export.router,                   prefix=_V1)
+from interfaces.api.v1.workspace import local_routes as local_workspace_routes
+app.include_router(local_workspace_routes.router,   prefix=_V1)  # /local
 app.include_router(llm_settings.router,             prefix=_V1)
 app.include_router(llm_settings.embedding_router,   prefix=_V1)
 app.include_router(scene_generation_routes.router,  prefix=_V1)  # /scenes
@@ -994,6 +1014,7 @@ app.include_router(chapter_element_routes.router,         prefix=_V1)  # /chapte
 app.include_router(voice.router,                          prefix=_V1)
 app.include_router(narrative_state.router,                prefix=_V1)
 app.include_router(foreshadow_ledger.router,              prefix=_V1)
+app.include_router(narrative_health.router,               prefix=_V1)
 
 # ── System：内部工具（不暴露到 OpenAPI 文档）──
 app.include_router(system_routes.router,                  prefix=_V1)

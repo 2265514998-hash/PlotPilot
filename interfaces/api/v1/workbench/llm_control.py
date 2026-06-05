@@ -100,7 +100,13 @@ async def list_models(payload: ModelListRequest) -> ModelListResponse:
             candidate['api_key'] = active.api_key
 
     api_format = (candidate.get('protocol') or '').strip().lower()
-    api_key = (candidate.get('api_key') or '').strip()
+    from application.ai.local_llm_utils import effective_local_api_key
+
+    api_key = effective_local_api_key(
+        (candidate.get('api_key') or '').strip(),
+        (candidate.get('base_url') or '').strip(),
+        (candidate.get('protocol') or 'openai').strip().lower(),
+    )
     if not api_key:
         raise HTTPException(status_code=400, detail='API key is required to fetch model list')
 
@@ -158,7 +164,7 @@ async def list_models(payload: ModelListRequest) -> ModelListResponse:
             ),
         ) from exc
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f'拉取模型列表失败：{exc}') from exc
+        raise HTTPException(status_code=502, detail="操作失败，请稍后重试") from exc
 
 
 # ---------- 核心 CRUD + 测试 ----------
@@ -176,6 +182,25 @@ def _invalidate_llm_panel_cache() -> None:
     _llm_panel_cache_ts = 0.0
 
 
+def _mask_api_key(key: str) -> str:
+    """掩码 API 密钥：只显示前 4 位和后 4 位。"""
+    if not key or len(key) <= 8:
+        return "****"
+    return f"{key[:4]}****{key[-4:]}"
+
+
+def _mask_panel_keys(data: LLMControlPanelData) -> LLMControlPanelData:
+    """掩码面板数据中的 API 密钥。"""
+    try:
+        d = data.model_dump()
+        for p in d.get("config", {}).get("profiles", []):
+            if p.get("api_key"):
+                p["api_key"] = _mask_api_key(p["api_key"])
+        return LLMControlPanelData(**d)
+    except Exception:
+        return data
+
+
 @router.get('', response_model=LLMControlPanelData)
 async def get_llm_control_panel() -> LLMControlPanelData:
     """获取 LLM 控制面板数据（带短 TTL 进程缓存）。"""
@@ -184,12 +209,12 @@ async def get_llm_control_panel() -> LLMControlPanelData:
 
     now = time.time()
     if _llm_panel_cache is not None and (now - _llm_panel_cache_ts) < _LLM_PANEL_CACHE_TTL:
-        return _llm_panel_cache
+        return _mask_panel_keys(_llm_panel_cache)
 
     data = _service.get_control_panel_data()
     _llm_panel_cache = data
     _llm_panel_cache_ts = now
-    return data
+    return _mask_panel_keys(data)
 
 
 @router.put('', response_model=LLMControlPanelData)

@@ -11,6 +11,7 @@ from infrastructure.ai.providers.anthropic_provider import AnthropicProvider
 from infrastructure.ai.providers.gemini_provider import GeminiProvider
 from infrastructure.ai.providers.mock_provider import MockProvider
 from infrastructure.ai.providers.openai_provider import OpenAIProvider
+from application.ai.local_llm_utils import effective_local_api_key
 from infrastructure.ai.url_utils import (
     normalize_anthropic_base_url,
     normalize_gemini_base_url,
@@ -30,7 +31,10 @@ class LLMProviderFactory:
             return MockProvider()
 
         resolved = self.control_service.resolve_profile(profile)
-        if not resolved.api_key.strip() or not resolved.model.strip():
+        api_key = effective_local_api_key(
+            resolved.api_key, resolved.base_url, resolved.protocol or "openai"
+        )
+        if not api_key.strip() or not resolved.model.strip():
             return MockProvider()
 
         settings = self._profile_to_settings(resolved)
@@ -51,11 +55,14 @@ class LLMProviderFactory:
         else:
             normalized_base_url = normalize_openai_base_url(profile.base_url)
 
+        api_key = effective_local_api_key(
+            profile.api_key, profile.base_url, profile.protocol or "openai"
+        )
         return Settings(
             default_model=profile.model,
             default_temperature=profile.temperature,
             default_max_tokens=profile.max_tokens,
-            api_key=profile.api_key,
+            api_key=api_key,
             base_url=normalized_base_url,
             timeout_seconds=profile.timeout_seconds,
             extra_headers=profile.extra_headers,
@@ -84,6 +91,18 @@ def _make_cache_key(profile: LLMProfile) -> str:
         str(profile.use_legacy_chat_completions),
     ]
     return "|".join(key_parts)
+
+
+def invalidate_dynamic_llm_cache() -> None:
+    """配置写入后清空 DynamicLLMService 内缓存的 Provider，使新档案立即生效。"""
+    try:
+        from interfaces.api.dependencies import get_llm_service
+
+        svc = get_llm_service()
+        if hasattr(svc, "_close_cached_provider"):
+            svc._close_cached_provider()
+    except Exception as exc:
+        logger.debug("invalidate_dynamic_llm_cache: %s", exc)
 
 
 class DynamicLLMService(LLMService):

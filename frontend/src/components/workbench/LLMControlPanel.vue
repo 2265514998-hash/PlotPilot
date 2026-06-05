@@ -709,12 +709,18 @@ watch(selectedProfileId, () => {
   saveUiState()
 })
 
+function onExternalLlmConfigChanged() {
+  void loadPanel()
+}
+
 onMounted(() => {
   void loadPanel()
+  window.addEventListener('plotpilot-llm-config-changed', onExternalLlmConfigChanged)
 })
 
 onBeforeUnmount(() => {
   saveUiState()
+  window.removeEventListener('plotpilot-llm-config-changed', onExternalLlmConfigChanged)
 })
 </script>
 

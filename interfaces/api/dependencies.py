@@ -4,9 +4,26 @@
 """
 import logging
 import os
+import re
 from pathlib import Path
 from functools import lru_cache
 from typing import TYPE_CHECKING, Optional
+
+from fastapi import HTTPException, Path as PathParam
+
+# ── 通用路径参数验证 ──
+
+_NOVEL_ID_PATTERN = re.compile(r'^[a-zA-Z0-9_-]{1,128}$')
+
+
+def validate_novel_id(novel_id: str = PathParam(..., description="小说 ID")) -> str:
+    """验证 novel_id 路径参数：仅允许字母、数字、下划线、连字符，最长 128 字符。"""
+    if not _NOVEL_ID_PATTERN.match(novel_id):
+        raise HTTPException(
+            status_code=400,
+            detail="无效的小说 ID：仅允许字母、数字、下划线和连字符（1-128 字符）",
+        )
+    return novel_id
 
 from domain.ai.services.llm_service import LLMService
 

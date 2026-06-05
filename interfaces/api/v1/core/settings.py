@@ -44,13 +44,20 @@ class FetchModelsRequest(BaseModel):
     base_url: str
 
 
-def _profile_to_dict(p: LLMProfile) -> dict:
+def _mask_api_key(key: str) -> str:
+    """掩码 API 密钥：只显示前 4 位和后 4 位。"""
+    if not key or len(key) <= 8:
+        return "****"
+    return f"{key[:4]}****{key[-4:]}"
+
+
+def _profile_to_dict(p: LLMProfile, mask_key: bool = True) -> dict:
     """将 LLMProfile 转换为旧接口的 dict 格式。"""
     return {
         "id": p.id,
         "name": p.name,
         "provider": p.protocol,
-        "api_key": p.api_key,
+        "api_key": _mask_api_key(p.api_key) if mask_key else p.api_key,
         "base_url": p.base_url,
         "model": p.model,
         "system_model": p.model,

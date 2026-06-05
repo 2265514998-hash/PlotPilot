@@ -32,13 +32,13 @@ export const voiceDriftApi = {
     return apiClient.post(
       `/novels/${novelId}/voice/drift/score`,
       payload
-    ) as unknown as Promise<ScoreChapterResponse>
+    )
   },
 
   /** 获取漂移报告 */
   getDriftReport(novelId: string): Promise<DriftReportResponse> {
     return apiClient.get(
       `/novels/${novelId}/voice/drift`
-    ) as unknown as Promise<DriftReportResponse>
+    )
   },
 }

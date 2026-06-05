@@ -56,16 +56,16 @@ export const monitorApi = {
     return apiClient.get(
       `/novels/${novelId}/monitor/tension-curve`,
       config,
-    ) as unknown as Promise<TensionCurveResponse>
+    )
   },
 
   /** GET /api/v1/novels/{novel_id}/monitor/voice-drift */
   getVoiceDrift(novelId: string): Promise<VoiceDriftResponse[]> {
-    return apiClient.get(`/novels/${novelId}/monitor/voice-drift`) as unknown as Promise<VoiceDriftResponse[]>
+    return apiClient.get(`/novels/${novelId}/monitor/voice-drift`)
   },
 
   /** GET /api/v1/novels/{novel_id}/monitor/foreshadow-stats */
   getForeshadowStats(novelId: string): Promise<ForeshadowStatsResponse> {
-    return apiClient.get(`/novels/${novelId}/monitor/foreshadow-stats`) as unknown as Promise<ForeshadowStatsResponse>
+    return apiClient.get(`/novels/${novelId}/monitor/foreshadow-stats`)
   },
 }

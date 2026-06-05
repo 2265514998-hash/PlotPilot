@@ -1,5 +1,5 @@
 <template>
-  <div class="autopilot-panel">
+  <div class="autopilot-panel" :class="{ 'is-embedded-cockpit': embeddedCockpit }">
     <section class="ap-hero" aria-label="运行状态">
       <div class="ap-hero__top">
         <div class="ap-hero__status">
@@ -60,6 +60,15 @@
         进度条、幕/章/节拍与阶段标签可能短暂不同步，以守护进程状态为准。
       </p>
     </section>
+
+    <StoryPipelineBar
+      v-if="status"
+      class="ap-pipeline"
+      :is-running="isRunning"
+      :current-stage="status.current_stage"
+      :writing-substep="status.writing_substep"
+      :audit-progress="status.audit_progress"
+    />
 
     <n-alert
       v-if="statusConnectivityFailures >= 2 && !statusPollDisabled"
@@ -302,10 +311,15 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useMessage } from 'naive-ui'
 import AutopilotWritingStream from './AutopilotWritingStream.vue'
+import StoryPipelineBar from './StoryPipelineBar.vue'
 import { resolveHttpUrl, subscribeChapterStream } from '../../api/config'
 import { buildAutopilotStagePresentation } from '../../constants/autopilotStagePresentation'
 
-const props = defineProps({ novelId: String })
+const props = defineProps({
+  novelId: String,
+  /** 嵌入三栏驾驶舱时收紧外边距 */
+  embeddedCockpit: { type: Boolean, default: false },
+})
 const emit = defineEmits([
   'status-change',
   'chapter-content-update',
@@ -1207,6 +1221,18 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 14px;
   box-shadow: var(--app-shadow-md);
+}
+
+.autopilot-panel.is-embedded-cockpit {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 12px 4px 8px;
+  background: transparent;
+}
+
+.ap-pipeline {
+  margin: 0;
 }
 
 .ap-hero {

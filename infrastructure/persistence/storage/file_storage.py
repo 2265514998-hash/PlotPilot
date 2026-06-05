@@ -27,9 +27,16 @@ class FileStorage(StorageBackend):
             path: 相对路径
 
         Returns:
-            绝对路径
+            绝对路径（限制在 base_path 内）
+
+        Raises:
+            ValueError: 如果路径试图逃逸出 base_path
         """
-        return self.base_path / path
+        full_path = (self.base_path / path).resolve()
+        base_resolved = self.base_path.resolve()
+        if not (full_path == base_resolved or str(full_path).startswith(str(base_resolved) + '\\') or str(full_path).startswith(str(base_resolved) + '/')):
+            raise ValueError(f"路径越界: {path}")
+        return full_path
 
     def read_json(self, path: str) -> Any:
         """读取 JSON 文件"""

@@ -57,7 +57,7 @@ async def export_novel(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"导出失败: {str(e)}")
+        raise HTTPException(status_code=500, detail="导出失败，请稍后重试")
 
 
 @router.get("/chapter/{chapter_id}")
@@ -112,4 +112,4 @@ async def export_chapter(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"导出失败: {str(e)}")
+        raise HTTPException(status_code=500, detail="导出失败，请稍后重试")

@@ -498,6 +498,8 @@ function openPanel() {
   showPanel.value = true
 }
 
+defineExpose({ openPanel })
+
 // ── 延迟加载：切换到 embedding tab 时才加载配置和扩展状态 ──
 let embeddingLoaded = false
 watch(drawerTab, (tab) => {

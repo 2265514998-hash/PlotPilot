@@ -65,33 +65,33 @@ export const checkpointApi = {
     apiClient.get<CheckpointListResponse>(
       `/novels/${novelId}/checkpoints`,
       { params: { limit } },
-    ) as unknown as Promise<CheckpointListResponse>,
+    ),
 
   /** POST /novels/{novel_id}/checkpoints */
   create: (novelId: string, body: CreateCheckpointRequest = {}) =>
     apiClient.post<CreateCheckpointResponse>(
       `/novels/${novelId}/checkpoints`,
       body,
-    ) as unknown as Promise<CreateCheckpointResponse>,
+    ),
 
   /** POST /novels/{novel_id}/checkpoints/{id}/rollback */
   rollback: (novelId: string, checkpointId: string) =>
     apiClient.post<RollbackResponse>(
       `/novels/${novelId}/checkpoints/${checkpointId}/rollback`,
       {},
-    ) as unknown as Promise<RollbackResponse>,
+    ),
 
   /** GET /novels/{novel_id}/checkpoints/branches */
   listBranches: (novelId: string) =>
     apiClient.get<BranchesResponse>(
       `/novels/${novelId}/checkpoints/branches`,
-    ) as unknown as Promise<BranchesResponse>,
+    ),
 
   /** GET /novels/{novel_id}/checkpoints/head */
   getHead: (novelId: string) =>
     apiClient.get<HeadStateResponse>(
       `/novels/${novelId}/checkpoints/head`,
-    ) as unknown as Promise<HeadStateResponse>,
+    ),
 }
 
 // ─── QualityGuardrail ──────────────────────────────────────────
@@ -135,14 +135,14 @@ export const guardrailApi = {
     apiClient.post<GuardrailCheckResponse>(
       `/novels/${novelId}/guardrail/check`,
       body,
-    ) as unknown as Promise<GuardrailCheckResponse>,
+    ),
 
   /** POST /novels/{novel_id}/guardrail/check with enforce mode */
   enforce: (novelId: string, body: Omit<GuardrailCheckRequest, 'mode'>) =>
     apiClient.post<GuardrailCheckResponse>(
       `/novels/${novelId}/guardrail/check`,
       { ...body, mode: 'enforce' },
-    ) as unknown as Promise<GuardrailCheckResponse>,
+    ),
 }
 
 // ─── StoryPhase ────────────────────────────────────────────────
@@ -159,14 +159,14 @@ export const storyPhaseApi = {
   get: (novelId: string) =>
     apiClient.get<StoryPhaseDTO>(
       `/novels/${novelId}/story-phase`,
-    ) as unknown as Promise<StoryPhaseDTO>,
+    ),
 
   /** PUT /novels/{novel_id}/story-phase */
   update: (novelId: string, body: StoryPhaseDTO) =>
     apiClient.put<StoryPhaseDTO>(
       `/novels/${novelId}/story-phase`,
       body,
-    ) as unknown as Promise<StoryPhaseDTO>,
+    ),
 }
 
 // ─── CharacterPsyche（原 CharacterSoul）───────────────────────
@@ -243,20 +243,20 @@ export const characterPsycheApi = {
   list: (novelId: string) =>
     apiClient.get<{ characters: CharacterPsycheDTO[] }>(
       `/novels/${novelId}/character-psyches`,
-    ) as unknown as Promise<{ characters: CharacterPsycheDTO[] }>,
+    ),
 
   /** GET /novels/{novel_id}/character-psyches/{name} */
   get: (novelId: string, name: string) =>
     apiClient.get<CharacterPsycheDetailDTO>(
       `/novels/${novelId}/character-psyches/${encodeURIComponent(name)}`,
-    ) as unknown as Promise<CharacterPsycheDetailDTO>,
+    ),
 
   /** POST /novels/{novel_id}/character-psyches/{name}/validate */
   validate: (novelId: string, name: string, body: ValidateBehaviorRequest) =>
     apiClient.post<ValidateBehaviorResponse>(
       `/novels/${novelId}/character-psyches/${encodeURIComponent(name)}/validate`,
       body,
-    ) as unknown as Promise<ValidateBehaviorResponse>,
+    ),
 
   /** POST /novels/{novel_id}/character-psyches/{name}/extract — 从简介启发式填补空 Bible 锚点（无模型） */
   extractToBible: (novelId: string, name: string) =>
@@ -264,7 +264,7 @@ export const characterPsycheApi = {
       `/novels/${novelId}/character-psyches/${encodeURIComponent(name)}/extract`,
       {},
       { timeout: 60_000 },
-    ) as unknown as Promise<ExtractCharacterPsycheResponse>,
+    ),
 
   /**
    * POST /novels/{novel_id}/character-psyches/auto-fill — 批量启发式填补空锚点（与 extract 同源，无模型）
@@ -275,7 +275,7 @@ export const characterPsycheApi = {
       `/novels/${novelId}/character-psyches/auto-fill`,
       body ?? {},
       { timeout: 120_000 },
-    ) as unknown as Promise<AutoFillCharacterPsycheResponse>,
+    ),
 }
 
 // ─── 向后兼容别名（v3.x 保留，v4.0 移除）──────────────────────
@@ -319,11 +319,11 @@ export const traceApi = {
     apiClient.get<TraceListResponse>(
       `/novels/${novelId}/traces`,
       { params },
-    ) as unknown as Promise<TraceListResponse>,
+    ),
 
   /** GET /novels/{novel_id}/traces/stats */
   stats: (novelId: string) =>
     apiClient.get<TraceStatsDTO>(
       `/novels/${novelId}/traces/stats`,
-    ) as unknown as Promise<TraceStatsDTO>,
+    ),
 }

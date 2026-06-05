@@ -283,11 +283,14 @@
         v-show="workMode === 'managed'"
         class="managed-stack"
         :novel-id="slug"
+        :cockpit-chapters="cockpitChapterItems"
+        :cockpit-current-chapter-id="currentChapterId"
         @status-change="handleAutopilotStatusChange"
         @chapter-content-update="handleChapterContentUpdate"
         @chapter-chunk="handleChapterChunkStream"
         @desk-refresh="handleAutopilotDeskRefreshFromStream"
         @beats-planned="handleAutopilotBeatsPlanned"
+        @chapter-select="onSidebarChapterSelect"
       />
 
     </div>
@@ -1406,6 +1409,16 @@ const currentChapter = computed(() => {
   if (!props.currentChapterId) return null
   return props.chapters.find(ch => ch.id === props.currentChapterId) || null
 })
+
+/** 全托管三栏驾驶舱左侧章节轨 */
+const cockpitChapterItems = computed(() =>
+  props.chapters.map(ch => ({
+    id: ch.id,
+    number: ch.number,
+    title: ch.title,
+    word_count: ch.word_count,
+  })),
+)
 
 const deskChapterTitle = computed(() => {
   const ch = currentChapter.value

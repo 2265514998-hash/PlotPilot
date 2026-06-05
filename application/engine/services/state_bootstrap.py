@@ -472,6 +472,63 @@ class StateBootstrap:
             logger.debug(f"加载快照失败（可能不存在）: {novel_id}, {e}")
             return []
 
+    def _load_knowledge(self, novel_id: str) -> Optional[Dict[str, Any]]:
+        """加载叙事知识到共享内存（供工作台降级路径使用）。"""
+        try:
+            from application.paths import get_db_path
+            from application.world.services.knowledge_service import KnowledgeService
+            from infrastructure.persistence.database.sqlite_knowledge_repository import (
+                SqliteKnowledgeRepository,
+            )
+
+            svc = KnowledgeService(SqliteKnowledgeRepository(get_db_path()))
+            sk = svc.get_knowledge(novel_id)
+            knowledge_dict: Dict[str, Any] = {
+                "version": sk.version,
+                "premise_lock": sk.premise_lock or "",
+                "chapters": [
+                    {
+                        "chapter_id": ch.chapter_id,
+                        "summary": ch.summary or "",
+                        "key_events": ch.key_events or "",
+                        "open_threads": ch.open_threads or "",
+                        "consistency_note": ch.consistency_note or "",
+                        "beat_sections": list(ch.beat_sections or []),
+                        "micro_beats": list(ch.micro_beats or []),
+                        "sync_status": ch.sync_status or "draft",
+                    }
+                    for ch in (sk.chapters or [])
+                ],
+                "facts": [
+                    {
+                        "id": f.id,
+                        "subject": f.subject or "",
+                        "predicate": f.predicate or "",
+                        "object": f.object or "",
+                        "chapter_id": f.chapter_id,
+                        "note": f.note or "",
+                        "entity_type": f.entity_type,
+                        "importance": f.importance,
+                        "location_type": f.location_type,
+                        "description": f.description,
+                        "first_appearance": f.first_appearance,
+                        "related_chapters": list(f.related_chapters or []),
+                        "tags": list(f.tags or []),
+                        "attributes": dict(f.attributes or {}),
+                        "confidence": f.confidence,
+                        "source_type": f.source_type,
+                        "subject_entity_id": f.subject_entity_id,
+                        "object_entity_id": f.object_entity_id,
+                    }
+                    for f in (sk.facts or [])
+                ],
+            }
+            self._shared.set_knowledge(novel_id, knowledge_dict)
+            return knowledge_dict
+        except Exception as e:
+            logger.debug(f"加载叙事知识失败（可能不存在）: {novel_id}, {e}")
+            return None
+
     def _load_chronicles(self, novel_id: str) -> List[Dict[str, Any]]:
         """从共享内存已有的 Bible timeline_notes + snapshots + chapters 实时聚合编年史，写入共享内存缓存。
 

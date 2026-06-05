@@ -101,5 +101,5 @@ export const knowledgeApi = {
       `/novels/${novelId}/knowledge/generate`,
       {},
       { timeout: 120_000 }
-    ) as unknown as Promise<{ success: boolean; message: string; facts_count: number; premise_lock: string }>,
+    ),
 }

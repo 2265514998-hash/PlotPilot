@@ -305,7 +305,7 @@ async def generate_bible_alias(
             "status_url": f"/api/v1/bible/novels/{novel_id}/bible/status"
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"启动Bible生成失败: {str(e)}")
+        raise HTTPException(status_code=500, detail="操作失败，请稍后重试")
 
 
 @router.patch("/{novel_id}/auto-approve-mode", response_model=NovelDTO)

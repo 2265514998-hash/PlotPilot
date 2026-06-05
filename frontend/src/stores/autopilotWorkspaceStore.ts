@@ -17,7 +17,7 @@ export const AUTOPILOT_WORKSPACE_TABS: ReadonlyArray<{
     id: 'cockpit',
     label: '全托管驾驶',
     short: '驾驶舱',
-    description: '启动、暂停与写作进度',
+    description: '三栏驾驶舱 · 管线 · 实时正文',
   },
   {
     id: 'dashboard',

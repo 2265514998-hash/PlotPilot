@@ -40,7 +40,7 @@ export const chapterElementApi = {
     return apiClient.get(
       `/chapters/${chapterId}/elements`,
       { params: elementType ? { element_type: elementType } : undefined }
-    ) as unknown as Promise<{ success: boolean; data: ChapterElementDTO[] }>
+    )
   },
 
   /** POST /api/v1/chapters/{chapter_id}/elements */
@@ -48,7 +48,7 @@ export const chapterElementApi = {
     return apiClient.post(
       `/chapters/${chapterId}/elements`,
       data
-    ) as unknown as Promise<{ success: boolean; data: ChapterElementDTO }>
+    )
   },
 
   /** PUT /api/v1/chapters/{chapter_id}/elements（批量替换） */
@@ -56,20 +56,20 @@ export const chapterElementApi = {
     return apiClient.put(
       `/chapters/${chapterId}/elements`,
       { elements }
-    ) as unknown as Promise<{ success: boolean; data: { updated_count: number; elements: ChapterElementDTO[] } }>
+    )
   },
 
   /** DELETE /api/v1/chapters/{chapter_id}/elements/{element_id} */
   deleteElement(chapterId: string, elementId: string): Promise<{ success: boolean; message: string }> {
     return apiClient.delete(
       `/chapters/${chapterId}/elements/${elementId}`
-    ) as unknown as Promise<{ success: boolean; message: string }>
+    )
   },
 
   /** GET /api/v1/chapters/elements/{element_type}/{element_id}/chapters — 反向查哪些章用了该元素 */
   getElementChapters(elementType: ElementType, elementId: string): Promise<{ success: boolean; data: { appearance_count: number; chapters: unknown[] } }> {
     return apiClient.get(
       `/chapters/elements/${elementType}/${elementId}/chapters`
-    ) as unknown as Promise<{ success: boolean; data: { appearance_count: number; chapters: unknown[] } }>
+    )
   },
 }

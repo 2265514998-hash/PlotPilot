@@ -345,7 +345,7 @@ async def suggest_main_plot_options(
         logger.exception("suggest_main_plot_options failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to suggest main plot options: {str(e)}",
+            detail="操作失败，请稍后重试",
         )
 
 
@@ -397,7 +397,7 @@ def get_storylines(novel_id: str):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get storylines: {str(e)}"
+            detail="操作失败，请稍后重试"
         )
 
 
@@ -452,7 +452,7 @@ def get_storyline_graph_data(novel_id: str):
         logger.exception("get_storyline_graph_data failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get graph data: {str(e)}"
+            detail="操作失败，请稍后重试"
         )
 
 
@@ -553,7 +553,7 @@ def create_storyline(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create storyline: {str(e)}"
+            detail="操作失败，请稍后重试"
         )
 
 
@@ -610,7 +610,7 @@ def update_storyline(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update storyline: {str(e)}"
+            detail="操作失败，请稍后重试"
         )
 
 
@@ -635,7 +635,7 @@ def delete_storyline(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete storyline: {str(e)}"
+            detail="操作失败，请稍后重试"
         )
 
 
@@ -681,7 +681,7 @@ def get_plot_arc(novel_id: str):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get plot arc: {str(e)}"
+            detail="操作失败，请稍后重试"
         )
 
 
@@ -735,7 +735,7 @@ def create_or_update_plot_arc(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create/update plot arc: {str(e)}"
+            detail="操作失败，请稍后重试"
         )
 
 
@@ -877,7 +877,7 @@ async def plan_novel(
         logger.error(f"Plan failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Plan failed: {str(e)}"
+            detail="操作失败，请稍后重试"
         )
 
 
@@ -925,7 +925,7 @@ async def review_chapter(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Review failed: {str(e)}"
+            detail="操作失败，请稍后重试"
         )
 
 
@@ -966,7 +966,7 @@ async def extend_outline(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Extend outline failed: {str(e)}"
+            detail="操作失败，请稍后重试"
         )
 
 
@@ -1027,7 +1027,7 @@ async def generate_bible(
         raise
     except Exception as e:
         logger.exception("generate_bible failed for %s", novel_id)
-        raise HTTPException(status_code=500, detail=f"Bible 生成失败：{str(e)}")
+        raise HTTPException(status_code=500, detail="操作失败，请稍后重试")
 
 
 @router.post(
@@ -1087,4 +1087,4 @@ async def generate_knowledge(
         raise
     except Exception as e:
         logger.exception("generate_knowledge failed for %s", novel_id)
-        raise HTTPException(status_code=500, detail=f"Knowledge 生成失败：{str(e)}")
+        raise HTTPException(status_code=500, detail="操作失败，请稍后重试")

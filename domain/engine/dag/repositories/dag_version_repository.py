@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 
-from application.engine.dag.models import DAGDefinition
+from domain.engine.dag.models import DAGDefinition
 
 
 class DAGVersionRepository(ABC):

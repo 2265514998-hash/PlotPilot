@@ -353,24 +353,23 @@ class TripleRepository:
         return triple
 
     async def save_batch(self, triples: List[Triple], batch_size: int = 50) -> List[Triple]:
-        """批量保存三元组，拆分为 micro-transactions 避免长事务锁表。
+        """批量保存三元组，使用底层 save_triples_batch 的 micro-transaction 优化。
 
         Args:
             triples: 三元组列表
             batch_size: 每批提交数量，默认 50。WAL 模式下小批量可让读请求"插队"。
         """
-        import time
-        total = len(triples)
-        if total == 0:
+        if not triples:
             return triples
 
-        for i in range(0, total, batch_size):
-            batch = triples[i:i + batch_size]
-            for t in batch:
-                await self.save(t)
-            # 🔥 微事务间隙主动让出时间片，允许 API 进程的读请求插队
-            if i + batch_size < total:
-                time.sleep(0.01)
+        # 按 novel_id 分组（save_triples_batch 按单个 novel 处理）
+        from collections import defaultdict
+        by_novel: dict = defaultdict(list)
+        for t in triples:
+            by_novel[t.novel_id].append(_triple_to_fact_dict(t))
+
+        for novel_id, facts in by_novel.items():
+            self._kr.save_triples_batch(novel_id, facts, batch_size=batch_size)
 
         return triples
 

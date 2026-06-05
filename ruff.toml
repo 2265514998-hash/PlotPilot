@@ -1,0 +1,30 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "S",    # flake8-bandit (security)
+    "UP",   # pyupgrade
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "S101",   # assert usage (common in tests)
+    "S603",   # subprocess call (used intentionally)
+    "S607",   # partial executable path (used intentionally)
+    "B008",   # function call in default argument (FastAPI Depends)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+"scripts/**" = ["S603", "S607"]
+
+[tool.ruff.format]
+quote-style = "single"

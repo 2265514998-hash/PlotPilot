@@ -25,7 +25,7 @@ export const tensionApi = {
     apiClient.post<TensionDiagnosis>(
       `/novels/${novelId}/writer-block/tension-slingshot`,
       payload
-    ) as unknown as Promise<TensionDiagnosis>,
+    ),
 }
 
 // ── 宏观重构扫描 ────────────────────────────────────────────
@@ -86,34 +86,34 @@ export const macroRefactorApi = {
     apiClient.get<LogicBreakpoint[]>(
       `/novels/${novelId}/macro-refactor/breakpoints`,
       { params: { trait, ...(conflictTags ? { conflict_tags: conflictTags } : {}) } }
-    ) as unknown as Promise<LogicBreakpoint[]>,
+    ),
 
   /** POST /api/v1/novels/{novel_id}/macro-refactor/proposals */
   generateProposal: (novelId: string, payload: RefactorProposalPayload) =>
     apiClient.post<RefactorProposal>(
       `/novels/${novelId}/macro-refactor/proposals`,
       payload
-    ) as unknown as Promise<RefactorProposal>,
+    ),
 
   /** POST /api/v1/novels/{novel_id}/macro-refactor/apply */
   applyMutations: (novelId: string, payload: ApplyMutationPayload) =>
     apiClient.post<ApplyMutationResponse>(
       `/novels/${novelId}/macro-refactor/apply`,
       payload
-    ) as unknown as Promise<ApplyMutationResponse>,
+    ),
 
   /** GET /api/v1/novels/{novel_id}/macro-refactor/diagnosis/latest */
   getLatestDiagnosis: (novelId: string) =>
     apiClient.get<MacroDiagnosisResult | null>(
       `/novels/${novelId}/macro-refactor/diagnosis/latest`
-    ) as unknown as Promise<MacroDiagnosisResult | null>,
+    ),
 
   /** GET /api/v1/novels/{novel_id}/macro-refactor/diagnosis/history */
   getDiagnosisHistory: (novelId: string, limit = 10) =>
     apiClient.get<MacroDiagnosisResult[]>(
       `/novels/${novelId}/macro-refactor/diagnosis/history`,
       { params: { limit } }
-    ) as unknown as Promise<MacroDiagnosisResult[]>,
+    ),
 
   /** POST /api/v1/novels/{novel_id}/macro-refactor/diagnosis/run */
   runDiagnosis: (novelId: string, traits?: string) =>
@@ -121,13 +121,13 @@ export const macroRefactorApi = {
       `/novels/${novelId}/macro-refactor/diagnosis/run`,
       null,
       { params: traits ? { traits } : {} }
-    ) as unknown as Promise<MacroDiagnosisResult>,
+    ),
 
   /** POST /api/v1/novels/{novel_id}/macro-refactor/diagnosis/{diagnosis_id}/resolve */
   resolveDiagnosis: (novelId: string, diagnosisId: string) =>
     apiClient.post<{ success: boolean; message: string }>(
       `/novels/${novelId}/macro-refactor/diagnosis/${diagnosisId}/resolve`
-    ) as unknown as Promise<{ success: boolean; message: string }>,
+    ),
 }
 
 // ── 实体叙事状态 ────────────────────────────────────────────
@@ -143,5 +143,5 @@ export const narrativeStateApi = {
     apiClient.get<EntityState>(
       `/novels/${novelId}/entities/${entityId}/state`,
       { params: { chapter } }
-    ) as unknown as Promise<EntityState>,
+    ),
 }

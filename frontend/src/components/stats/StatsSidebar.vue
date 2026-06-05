@@ -134,8 +134,18 @@
           </span>
           <span>刷新列表</span>
         </button>
-        <GlobalLLMEntryButton appearance="sidebar" />
+        <GlobalLLMEntryButton ref="llmRef" appearance="sidebar" />
+        <button
+          type="button"
+          class="action-btn action-local-model"
+          :class="{ 'action-local-model--ready': localModelStore.hasReachableLocalLlm }"
+          @click="quickConnectLocal"
+        >
+          <span class="action-icon" aria-hidden="true">🔌</span>
+          <span>连接本地 AI</span>
+        </button>
         <PromptPlazaEntryButton appearance="sidebar" />
+        <LocalModelConnectModal ref="localModelRef" @open-llm-console="openLlmConsole" />
       </div>
     </section>
 
@@ -173,6 +183,22 @@ import StatCard from './StatCard.vue'
 import { useStatsStore } from '@/stores/statsStore'
 import GlobalLLMEntryButton from '@/components/global/GlobalLLMEntryButton.vue'
 import PromptPlazaEntryButton from '@/components/global/PromptPlazaEntryButton.vue'
+import LocalModelConnectModal from '@/components/global/LocalModelConnectModal.vue'
+import { useLocalModelStore } from '@/stores/localModelStore'
+
+const llmRef = ref<{ openPanel?: () => void } | null>(null)
+const localModelRef = ref<{ open: () => void } | null>(null)
+const localModelStore = useLocalModelStore()
+
+function openLlmConsole() {
+  llmRef.value?.openPanel?.()
+}
+
+async function quickConnectLocal() {
+  const ok = await localModelStore.connectLocalDirect({ quiet: false, force: true })
+  if (ok) openLlmConsole()
+  else localModelRef.value?.open()
+}
 const emit = defineEmits<{
   (e: 'create-book'): void
   (e: 'refresh-list'): void
@@ -196,6 +222,8 @@ const lastUpdateTime = ref<Date | null>(null)
 let updateInterval: number | null = null
 
 onMounted(async () => {
+  localModelStore.hydrateFromCache()
+
   try {
     await statsStore.loadGlobalStats()
     lastUpdateTime.value = new Date()
@@ -613,6 +641,11 @@ const updateTimeText = computed(() => formatTime(lastUpdateTime.value))
 .action-btn.action-refresh {
   background: linear-gradient(135deg, var(--color-brand-hover, #6366f1) 0%, var(--color-brand, #4f46e5) 55%, var(--color-brand-pressed, #4338ca) 100%);
   border-color: color-mix(in srgb, var(--color-brand, #4f46e5) 52%, transparent);
+}
+
+.action-btn.action-local-model--ready {
+  background: linear-gradient(135deg, #059669 0%, #10b981 55%, #047857 100%);
+  border-color: color-mix(in srgb, #10b981 52%, transparent);
 }
 
 .action-btn:hover {

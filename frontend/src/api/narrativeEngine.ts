@@ -67,17 +67,17 @@ export interface SurfaceCatalogResponse {
 export const narrativeEngineApi = {
   /** GET /narrative-engine/surface-catalog — 小说家维度 × 前端模块 × 路径族 */
   getSurfaceCatalog: () =>
-    apiClient.get<SurfaceCatalogResponse>('/narrative-engine/surface-catalog') as unknown as Promise<SurfaceCatalogResponse>,
+    apiClient.get<SurfaceCatalogResponse>('/narrative-engine/surface-catalog'),
 
   /** GET /novels/{id}/narrative-engine/story-evolution */
   getStoryEvolution: (novelId: string) =>
     apiClient.get<StoryEvolutionReadModel>(
       `/novels/${novelId}/narrative-engine/story-evolution`,
-    ) as unknown as Promise<StoryEvolutionReadModel>,
+    ),
 
   /** GET /novels/{id}/narrative-engine/persona-voice/{characterId} */
   getPersonaVoice: (novelId: string, characterId: string) =>
     apiClient.get<PersonaVoiceReadModel>(
       `/novels/${novelId}/narrative-engine/persona-voice/${characterId}`,
-    ) as unknown as Promise<PersonaVoiceReadModel>,
+    ),
 }

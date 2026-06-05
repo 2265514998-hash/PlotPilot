@@ -20,63 +20,63 @@ import type {
 export const dagApi = {
   /** GET /api/v1/dag/{novel_id} — 获取当前 DAG 定义（只读） */
   getDAG: (novelId: string) =>
-    apiClient.get<DAGDefinition>(`/dag/${novelId}`) as unknown as Promise<DAGDefinition>,
+    apiClient.get<DAGDefinition>(`/dag/${novelId}`),
 
   /** GET /api/v1/dag/{novel_id}/nodes/{node_id} — 获取节点详情（只读） */
   getNode: (novelId: string, nodeId: string) =>
-    apiClient.get<Record<string, unknown>>(`/dag/${novelId}/nodes/${nodeId}`) as unknown as Promise<Record<string, unknown>>,
+    apiClient.get<Record<string, unknown>>(`/dag/${novelId}/nodes/${nodeId}`),
 
   /** POST /api/v1/dag/{novel_id}/nodes/{node_id}/toggle — 切换启用/禁用（唯一写操作） */
   toggleNode: (novelId: string, nodeId: string) =>
-    apiClient.post<DAGDefinition>(`/dag/${novelId}/nodes/${nodeId}/toggle`, {}) as unknown as Promise<DAGDefinition>,
+    apiClient.post<DAGDefinition>(`/dag/${novelId}/nodes/${nodeId}/toggle`, {}),
 
   /** GET /api/v1/dag/{novel_id}/status — 获取运行状态 */
   getStatus: (novelId: string) =>
-    apiClient.get<DAGStatusResponse>(`/dag/${novelId}/status`) as unknown as Promise<DAGStatusResponse>,
+    apiClient.get<DAGStatusResponse>(`/dag/${novelId}/status`),
 
   // ─── 节点注册表 ───
 
   /** GET /api/v1/dag/registry/types — 获取所有已注册的节点类型 */
   listNodeTypes: () =>
-    apiClient.get<{ types: Record<string, NodeMeta> }>('/dag/registry/types') as unknown as Promise<{ types: Record<string, NodeMeta> }>,
+    apiClient.get<{ types: Record<string, NodeMeta> }>('/dag/registry/types'),
 
   /** GET /api/v1/dag/registry/types/{node_type} — 获取单个节点类型的元数据 */
   getNodeTypeMeta: (nodeType: string) =>
-    apiClient.get<NodeMeta>(`/dag/registry/types/${nodeType}`) as unknown as Promise<NodeMeta>,
+    apiClient.get<NodeMeta>(`/dag/registry/types/${nodeType}`),
 
   /** GET /api/v1/dag/registry/linkage — 默认 DAG 与 CPMS 一一对应 + 全类型索引 */
   getRegistryLinkage: () =>
-    apiClient.get<DagRegistryLinkageResponse>('/dag/registry/linkage') as unknown as Promise<DagRegistryLinkageResponse>,
+    apiClient.get<DagRegistryLinkageResponse>('/dag/registry/linkage'),
 
   // ─── 健康检查 ───
 
   /** GET /api/v1/dag/health/dag — DAG 引擎健康检查 */
   healthCheck: () =>
-    apiClient.get<Record<string, unknown>>('/dag/health/dag') as unknown as Promise<Record<string, unknown>>,
+    apiClient.get<Record<string, unknown>>('/dag/health/dag'),
 
   // ─── 提示词 ───
 
   /** GET /api/v1/dag/{novel_id}/nodes/{node_id}/prompt-live — 实时提示词 */
   getNodePromptLive: (novelId: string, nodeId: string) =>
-    apiClient.get<NodePromptLive>(`/dag/${novelId}/nodes/${nodeId}/prompt-live`) as unknown as Promise<NodePromptLive>,
+    apiClient.get<NodePromptLive>(`/dag/${novelId}/nodes/${nodeId}/prompt-live`),
 
   /** GET /api/v1/dag/{novel_id}/nodes/{node_id}/prompt — 获取渲染后的 Prompt（预览） */
   getRenderedPrompt: (novelId: string, nodeId: string) =>
-    apiClient.get<{ node_id: string; template: string; variables: Record<string, string>; rendered: string }>(`/dag/${novelId}/nodes/${nodeId}/prompt`) as unknown as Promise<{ node_id: string; template: string; variables: Record<string, string>; rendered: string }>,
+    apiClient.get<{ node_id: string; template: string; variables: Record<string, string>; rendered: string }>(`/dag/${novelId}/nodes/${nodeId}/prompt`),
 
   // ─── 运行控制（dagRunStore 使用） ───
 
   /** POST /api/v1/dag/{novel_id}/run — 启动 DAG 运行 */
   runDAG: (novelId: string) =>
-    apiClient.post<{ status: string; novel_id: string }>(`/dag/${novelId}/run`, {}) as unknown as Promise<{ status: string; novel_id: string }>,
+    apiClient.post<{ status: string; novel_id: string }>(`/dag/${novelId}/run`, {}),
 
   /** POST /api/v1/dag/{novel_id}/stop — 停止 DAG 运行 */
   stopDAG: (novelId: string) =>
-    apiClient.post<{ status: string; novel_id: string }>(`/dag/${novelId}/stop`, {}) as unknown as Promise<{ status: string; novel_id: string }>,
+    apiClient.post<{ status: string; novel_id: string }>(`/dag/${novelId}/stop`, {}),
 
   // ─── 节点配置更新（nodeEditorStore 使用） ───
 
   /** PUT /api/v1/dag/{novel_id}/nodes/{node_id} — 更新节点配置 */
   updateNodeConfig: (novelId: string, nodeId: string, config: Record<string, unknown>) =>
-    apiClient.put<DAGDefinition>(`/dag/${novelId}/nodes/${nodeId}`, config) as unknown as Promise<DAGDefinition>,
+    apiClient.put<DAGDefinition>(`/dag/${novelId}/nodes/${nodeId}`, config),
 }

@@ -377,19 +377,6 @@ class OpenAIProvider(BaseProvider):
             return OpenAIProvider._normalize_chat_completion_content(content)
         return ""
 
-    @staticmethod
-    def _extract_text_from_stream_chunk(chunk: Any) -> str:
-        if not getattr(chunk, "choices", None):
-            return ""
-
-        delta = getattr(chunk.choices[0], "delta", None)
-        content = getattr(delta, "content", None)
-        if isinstance(content, str):
-            return content
-        if isinstance(content, list):
-            return OpenAIProvider._normalize_chat_completion_content(content)
-        return ""
-
     async def _generate_via_stream(self, request_kwargs: dict[str, Any]) -> tuple[str, TokenUsage]:
         stream = await self.async_client.chat.completions.create(
             **{**request_kwargs, "stream": True}

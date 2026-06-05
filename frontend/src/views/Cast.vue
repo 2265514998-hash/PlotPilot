@@ -157,6 +157,58 @@
                 <n-descriptions-item label="特点">{{ formChar.traits || '无' }}</n-descriptions-item>
                 <n-descriptions-item label="备注">{{ formChar.note || '无' }}</n-descriptions-item>
               </n-descriptions>
+
+              <!-- 扩展角色信息（来自 Bible） -->
+              <template v-if="formChar.mental_state || formChar.core_belief || formChar.verbal_tic || (formChar.active_wounds && formChar.active_wounds.length)">
+                <n-divider dashed style="margin: 12px 0 8px">角色深度</n-divider>
+                <n-descriptions label-placement="left" :column="1" bordered size="small">
+                  <n-descriptions-item v-if="formChar.mental_state" label="心理状态">
+                    <n-tag :type="formChar.mental_state === 'NORMAL' ? 'success' : 'warning'" size="small">
+                      {{ formChar.mental_state }}
+                    </n-tag>
+                    <n-text v-if="formChar.mental_state_reason" depth="3" style="margin-left: 6px; font-size: 12px">
+                      {{ formChar.mental_state_reason }}
+                    </n-text>
+                  </n-descriptions-item>
+                  <n-descriptions-item v-if="formChar.core_belief" label="核心信念">
+                    <n-blockquote style="margin: 0; font-size: 13px">{{ formChar.core_belief }}</n-blockquote>
+                  </n-descriptions-item>
+                  <n-descriptions-item v-if="formChar.moral_taboos && formChar.moral_taboos.length" label="道德禁忌">
+                    <n-space :size="4">
+                      <n-tag v-for="t in formChar.moral_taboos" :key="t" size="small" type="error">{{ t }}</n-tag>
+                    </n-space>
+                  </n-descriptions-item>
+                  <n-descriptions-item v-if="formChar.verbal_tic" label="口头禅">
+                    {{ formChar.verbal_tic }}
+                  </n-descriptions-item>
+                  <n-descriptions-item v-if="formChar.idle_behavior" label="闲时行为">
+                    {{ formChar.idle_behavior }}
+                  </n-descriptions-item>
+                  <n-descriptions-item v-if="formChar.active_wounds && formChar.active_wounds.length" label="活跃创伤">
+                    <n-collapse>
+                      <n-collapse-item v-for="(w, wi) in formChar.active_wounds" :key="wi" :title="w.name || `创伤 ${wi + 1}`">
+                        <n-text depth="3" style="font-size: 12px">{{ w.description || JSON.stringify(w) }}</n-text>
+                      </n-collapse-item>
+                    </n-collapse>
+                  </n-descriptions-item>
+                </n-descriptions>
+              </template>
+
+              <!-- POV 防火墙 -->
+              <template v-if="formChar.public_profile || formChar.hidden_profile">
+                <n-divider dashed style="margin: 12px 0 8px">人设档案</n-divider>
+                <n-descriptions label-placement="left" :column="1" bordered size="small">
+                  <n-descriptions-item v-if="formChar.public_profile" label="公开人设">
+                    <n-text style="font-size: 13px; white-space: pre-wrap">{{ formChar.public_profile }}</n-text>
+                  </n-descriptions-item>
+                  <n-descriptions-item v-if="formChar.hidden_profile" label="隐藏档案">
+                    <n-tag v-if="formChar.reveal_chapter" type="warning" size="small" style="margin-bottom: 4px">
+                      第 {{ formChar.reveal_chapter }} 章后揭示
+                    </n-tag>
+                    <n-text style="font-size: 13px; white-space: pre-wrap">{{ formChar.hidden_profile }}</n-text>
+                  </n-descriptions-item>
+                </n-descriptions>
+              </template>
             </div>
             <n-empty v-else description="点击图中节点查看人物详情" size="small" style="margin-top: 40px;" />
           </n-tab-pane>
@@ -200,6 +252,7 @@ import GraphChart from '../components/charts/GraphChart.vue'
 import KnowledgeTriplesTableEditor from '../components/knowledge/KnowledgeTriplesTableEditor.vue'
 import { convertGraph, type VisNode, type VisEdge, type EChartsNode, type EChartsLink } from '../utils/visToEcharts'
 import { castApi } from '../api/cast'
+import { bibleApi, type CharacterDTO } from '../api/bible'
 
 interface CastCharacter {
   id: string
@@ -230,6 +283,9 @@ const graph = ref<{ characters: CastCharacter[]; relationships: CastRelationship
   characters: [],
   relationships: [],
 })
+
+// Bible 角色扩展数据（用于详情面板展示）
+const bibleCharMap = ref<Map<string, CharacterDTO>>(new Map())
 
 const searchQ = ref('')
 const highlightIds = ref<Set<string>>(new Set())
@@ -278,6 +334,17 @@ const formChar = ref({
   role: '',
   traits: '',
   note: '',
+  // 扩展字段（来自 Bible）
+  mental_state: '',
+  mental_state_reason: '',
+  core_belief: '',
+  moral_taboos: [] as string[],
+  verbal_tic: '',
+  idle_behavior: '',
+  active_wounds: [] as Array<Record<string, string>>,
+  public_profile: '',
+  hidden_profile: '',
+  reveal_chapter: null as number | null,
 })
 
 const formRel = ref({
@@ -329,6 +396,8 @@ const handleNodeClick = (node: EChartsNode) => {
   const c = graph.value.characters.find(x => x.id === node.id)
   if (c) {
     castPane.value = 'node'
+    // 从 Bible 数据中查找扩展字段
+    const bc = bibleCharMap.value.get(c.id) || bibleCharMap.value.get(c.name)
     formChar.value = {
       id: c.id,
       name: c.name,
@@ -336,6 +405,16 @@ const handleNodeClick = (node: EChartsNode) => {
       role: c.role || '',
       traits: c.traits || '',
       note: c.note || '',
+      mental_state: bc?.mental_state || '',
+      mental_state_reason: bc?.mental_state_reason || '',
+      core_belief: bc?.core_belief || '',
+      moral_taboos: bc?.moral_taboos || [],
+      verbal_tic: bc?.verbal_tic || '',
+      idle_behavior: bc?.idle_behavior || '',
+      active_wounds: bc?.active_wounds || [],
+      public_profile: bc?.public_profile || '',
+      hidden_profile: bc?.hidden_profile || '',
+      reveal_chapter: bc?.reveal_chapter ?? null,
     }
   }
 }
@@ -380,11 +459,23 @@ const goChapter = (cid: number) => {
 
 const reload = async () => {
   try {
-    const data = await castApi.getCast(slug)
+    const [data, bible] = await Promise.all([
+      castApi.getCast(slug),
+      bibleApi.getBible(slug).catch(() => null),
+    ])
     graph.value = {
       characters: data.characters || [],
       relationships: data.relationships || [],
     }
+    // 构建 Bible 角色映射（按 id 和 name 双索引）
+    const map = new Map<string, CharacterDTO>()
+    if (bible?.characters) {
+      for (const ch of bible.characters) {
+        if (ch.id) map.set(ch.id, ch)
+        if (ch.name) map.set(ch.name, ch)
+      }
+    }
+    bibleCharMap.value = map
     highlightIds.value = new Set()
     searchQ.value = ''
     await loadCoverage()

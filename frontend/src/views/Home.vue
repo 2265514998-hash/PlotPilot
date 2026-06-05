@@ -133,6 +133,8 @@
           </n-space>
         </n-card>
 
+        <LocalConnectPanel />
+
         <!-- Books Section -->
         <section class="books-section">
           <div class="section-header">
@@ -418,6 +420,7 @@ import StatsSidebar from '@/components/stats/StatsSidebar.vue'
 import NovelSetupGuide from '@/components/onboarding/NovelSetupGuide.vue'
 import { useAppSettingsShellStore } from '@/stores/appSettingsShellStore'
 import MarketTaxonomyPicker from '@/components/taxonomy/MarketTaxonomyPicker.vue'
+import LocalConnectPanel from '@/components/home/LocalConnectPanel.vue'
 import { parseGenreWorldFromPremise } from '@/utils/premisePresets'
 import { useStatsStore } from '@/stores/statsStore'
 
