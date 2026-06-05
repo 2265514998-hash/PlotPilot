@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  backend:
+    build: .
+    container_name: plotpilot-api
+    ports:
+      - "8005:8005"
+    volumes:
+      - plotpilot_data:/app/data
+      - plotpilot_sessions:/app/sessions
+      - ./.env:/app/.env:ro
+    environment:
+      - PLOTPILOT_HOST=0.0.0.0
+      - PLOTPILOT_PORT=8005
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: plotpilot-chroma
+    ports:
+      - "8006:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    restart: unless-stopped
+
+volumes:
+  plotpilot_data:
+  plotpilot_sessions:
+  chromadb_data:

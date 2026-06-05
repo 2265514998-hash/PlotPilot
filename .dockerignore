@@ -1,0 +1,37 @@
+# Python
+.venv/
+venv/
+env/
+.env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# Frontend (not needed in container)
+frontend/
+node_modules/
+
+# Embedded Python (18MB zip, not needed in container)
+tools/python-3.11.9-embed-amd64.zip
+tools/python_embed/
+tools/plotpilot/
+
+# Git
+.git/
+.gitignore
