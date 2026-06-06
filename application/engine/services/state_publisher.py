@@ -20,6 +20,7 @@ from application.engine.services.shared_state_repository import (
     NovelState,
     get_shared_state_repository,
 )
+from application.engine.services.persistence_queue import PersistenceQueue
 
 logger = logging.getLogger(__name__)
 
