@@ -647,3 +647,114 @@ rt { font-size: 0.6em; color: var(--app-text-muted); }
     color 0.3s ease,
     border-color 0.3s ease !important;
 }
+
+/* ── Focus Mode ── */
+.focus-mode .n-layout-sider,
+.focus-mode .stats-top-bar,
+.focus-mode .stats-sidebar,
+.focus-mode .right-panel,
+.focus-mode .sidebar,
+.focus-mode .cockpit-layout__right,
+.focus-mode .n-tabs-nav,
+.focus-mode .chapter-list-header {
+  opacity: 0;
+  pointer-events: none;
+  max-width: 0;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  transition: opacity 0.3s ease, max-width 0.3s ease, padding 0.3s ease;
+}
+
+.focus-mode .n-layout-content,
+.focus-mode .workbench-main,
+.focus-mode .chapter-editor-container {
+  margin: 0 auto;
+  max-width: 780px;
+  padding: 2rem 1rem;
+}
+
+.focus-mode .tiptap-toolbar--floating {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0.3;
+  transition: opacity 0.2s ease;
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+}
+
+.focus-mode .tiptap-toolbar--floating:hover {
+  opacity: 1;
+}
+
+/* ── Ghost Text ── */
+.ai-ghost-text {
+  color: var(--text-color-muted, #94a3b8);
+  font-style: italic;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+/* ── Card hover ── */
+.card-hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Corkboard grid ── */
+.corkboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+/* ── Empty state ── */
+.empty-state-splash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+  color: var(--text-color-muted);
+}
+
+/* ── Slash command ── */
+.slash-command-popup { max-height: 320px; overflow-y: auto; padding: 0.25rem; }
+.slash-command-group { padding: 0.25rem 0; }
+.slash-command-group-label {
+  padding: 0.25rem 0.75rem; font-size: 0.7rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-color-muted);
+}
+.slash-command-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.45rem 0.75rem; border-radius: 6px; cursor: pointer;
+  transition: background 0.1s ease;
+}
+.slash-command-item:hover, .slash-command-item--selected {
+  background: var(--action-color-hover, rgba(0,0,0,0.05));
+}
+.slash-command-item__icon {
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; background: var(--action-color-secondary); font-size: 0.875rem; flex-shrink: 0;
+}
+.slash-command-item__label { font-weight: 500; font-size: 0.875rem; }
+.slash-command-item__desc { font-size: 0.75rem; color: var(--text-color-muted); }
+
+/* ── POV tags ── */
+.pov-tag { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
+.pov-tag--protagonist { background: #dbeafe; color: #1e40af; }
+.pov-tag--antagonist { background: #fee2e2; color: #991b1b; }
+.pov-tag--supporting { background: #fef3c7; color: #92400e; }
+.pov-tag--other { background: #f3f4f6; color: #6b7280; }

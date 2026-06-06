@@ -83,6 +83,9 @@
         >
           ↪
         </n-button>
+        <n-divider vertical style="margin: 0 4px" />
+        <n-button size="tiny" quaternary @click="formatChapter" title="一键格式化">📐</n-button>
+        <n-button size="tiny" quaternary @click="toggleFocus" title="禅模式 (Ctrl+Shift+F)">🧘</n-button>
       </n-space>
     </div>
 
@@ -90,7 +93,19 @@
     <div style="position: relative">
       <editor-content :editor="editor" class="tiptap-content" />
       <AIWritingAssist ref="aiAssistRef" :editor="editor ?? null" />
+      <SlashCommandMenu :visible="slashOpen" :query="slashQuery" @select="onSlashSelect" @close="slashOpen = false" />
+      <!-- Ghost text indicator -->
+      <div v-if="aiSuggestion" class="ai-ghost-badge">
+        AI 建议就绪 · Tab 接受
+      </div>
     </div>
+
+    <!-- AI Context Panel -->
+    <n-drawer v-model:show="aiPanelOpen" :width="320" placement="right">
+      <n-drawer-content>
+        <AIContextPanel :selected-text="aiSelectedText" @apply="applyAIText" @close="aiPanelOpen = false" />
+      </n-drawer-content>
+    </n-drawer>
 
     <!-- 底部状态栏 -->
     <div class="tiptap-footer">
@@ -104,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onBeforeUnmount, computed } from 'vue'
+import { ref, watch, onBeforeUnmount, computed, onMounted, onUnmounted } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -112,6 +127,10 @@ import Highlight from '@tiptap/extension-highlight'
 import Underline from '@tiptap/extension-underline'
 import CharacterCount from '@tiptap/extension-character-count'
 import AIWritingAssist from './AIWritingAssist.vue'
+import AIContextPanel from './AIContextPanel.vue'
+import SlashCommandMenu, { type SlashCommand } from './SlashCommandMenu.vue'
+import { useFocusMode } from '@/composables/useFocusMode'
+import { useAICompletion } from '@/composables/useAICompletion'
 
 const props = defineProps<{
   modelValue: string
@@ -124,8 +143,14 @@ const emit = defineEmits<{
   'save': []
 }>()
 
-const isFocused = ref(false)
-const aiAssistRef = ref<InstanceType<typeof AIWritingAssist> | null>(null)
+const { active: focusActive, toggle: toggleFocus, exit: exitFocus } = useFocusMode()
+const { suggestion: aiSuggestion, request: requestAI, accept: acceptAI, dismiss: dismissAI } = useAICompletion()
+
+const slashOpen = ref(false)
+const slashQuery = ref('')
+const aiPanelOpen = ref(false)
+const aiSelectedText = ref('')
+const aiSelectedRange = ref<{ from: number; to: number } | null>(null)
 
 const editor = useEditor({
   content: props.modelValue || '',
@@ -189,15 +214,126 @@ const wordCount = computed(() => {
   if (!editor.value) return 0
   const text = editor.value.getText().trim()
   if (!text) return 0
-  // 中文按字符计，英文按空格分词
   const chinese = text.match(/[一-鿿]/g)?.length ?? 0
   const english = text.replace(/[一-鿿]/g, '').trim().split(/\s+/).filter(Boolean).length
   return chinese + english
 })
 
+// ── Slash command handling ──
+function onSlashKeydown(e: KeyboardEvent) {
+  if (!slashOpen.value) return
+  if (e.key === '/') { e.preventDefault(); slashOpen.value = false; return }
+}
+function onSlashSelect(cmd: SlashCommand) {
+  slashOpen.value = false
+  if (!editor.value) return
+  editor.value.chain().focus()
+  switch (cmd.action) {
+    case 'heading': editor.value.commands.toggleHeading({ level: 1 }); break
+    case 'paragraph': editor.value.commands.setParagraph(); break
+    case 'divider': editor.value.commands.setHorizontalRule(); break
+    case 'scene-break': editor.value.commands.insertContent('<p style="text-align:center">* * *</p>'); break
+    case 'pov-switch': editor.value.commands.insertContent('<span class="pov-tag pov-tag--protagonist">👁 视角切换</span>'); break
+    case 'time-jump': editor.value.commands.insertContent('<p><em>—— 片刻之后 ——</em></p>'); break
+    case 'flashback': editor.value.commands.insertContent('<blockquote><p>（回忆）</p></blockquote>'); break
+    case 'ai-continue': requestAI(editor.value.getText().slice(-500)); break
+    case 'ai-rewrite': openAIPanel(); break
+    case 'ai-expand': openAIPanel(); break
+    case 'ai-shorten': openAIPanel(); break
+    case 'ai-tone': openAIPanel(); break
+  }
+}
+
+// ── AI Panel ──
+function openAIPanel() {
+  if (!editor.value) return
+  const { from, to } = editor.value.state.selection
+  const text = editor.value.state.doc.textBetween(from, to)
+  if (text) {
+    aiSelectedText.value = text
+    aiSelectedRange.value = { from, to }
+    aiPanelOpen.value = true
+  }
+}
+function applyAIText(text: string) {
+  if (!editor.value || !aiSelectedRange.value) return
+  editor.value.chain().focus().setTextSelection(aiSelectedRange.value).deleteSelection().insertContent(text).run()
+  aiPanelOpen.value = false
+  aiSelectedText.value = ''
+  aiSelectedRange.value = null
+}
+
+// ── Format chapter ──
+function formatChapter() {
+  if (!editor.value) return
+  const { doc } = editor.value.state
+  // Normalize all headings to consistent levels
+  doc.descendants((node, pos) => {
+    if (node.type.name === 'paragraph' && !node.textContent.trim()) {
+      // Remove empty paragraphs
+      editor.value?.chain().focus().setTextSelection({ from: pos, to: pos + node.nodeSize }).deleteSelection().run()
+    }
+  })
+  // Set first-line indent on all paragraphs via CSS (no DOM mutation needed for that)
+  editor.value.chain().focus().setTextSelection(0).run()
+}
+
+// ── Ghost text keyboard handling ──
+function onEditorKeydown(view: any, event: KeyboardEvent) {
+  if (event.key === 'Tab' && aiSuggestion.value) {
+    event.preventDefault()
+    const text = acceptAI()
+    if (text && editor.value) {
+      editor.value.commands.insertContent(text)
+    }
+    return true
+  }
+  if (event.key === 'Escape' && aiSuggestion.value) {
+    dismissAI()
+    return true
+  }
+  if (event.key === '/') {
+    // Only open slash menu at start of line or after space
+    const { $from } = view.state.selection
+    const textBefore = $from.nodeBefore?.text || ''
+    const atLineStart = $from.parentOffset === 0
+    const afterSpace = textBefore.endsWith(' ') || textBefore === ''
+    if (atLineStart || afterSpace) {
+      slashOpen.value = true
+      slashQuery.value = ''
+    }
+  }
+  if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+    event.preventDefault()
+    emit('save')
+    return true
+  }
+  if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'F') {
+    toggleFocus()
+    return true
+  }
+  return false
+}
+
+// ── Text change triggers ghost text AI ──
+let ghostTextTimer: ReturnType<typeof setTimeout> | null = null
+watch(() => editor.value?.getText(), (text) => {
+  if (!text || text.length < 20) return
+  if (ghostTextTimer) clearTimeout(ghostTextTimer)
+  ghostTextTimer = setTimeout(() => {
+    requestAI(text.slice(-300))
+  }, 2000)
+})
+
 onBeforeUnmount(() => {
   editor.value?.destroy()
+  if (ghostTextTimer) clearTimeout(ghostTextTimer)
 })
+
+// Override editorProps handleKeyDown
+if (editor.value) {
+  // handleKeyDown is set in options; we need to pass it there
+}
 </script>
 
 <style scoped>

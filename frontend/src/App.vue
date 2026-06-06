@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { NConfigProvider, NMessageProvider, NDialogProvider, zhCN, dateZhCN, darkTheme } from 'naive-ui'
+import { computed, ref } from 'vue'
+import { NConfigProvider, NMessageProvider, NDialogProvider, zhCN, dateZhCN, darkTheme, NButton, NTag, NSpace, NIcon } from 'naive-ui'
+import { SettingsOutline, SearchOutline } from '@vicons/ionicons5'
 import AppSettingsModal from './components/settings/AppSettingsModal.vue'
+import GlobalSearch from './components/global/GlobalSearch.vue'
+import ShortcutHelp from './components/global/ShortcutHelp.vue'
 import type { GlobalThemeOverrides } from 'naive-ui'
 import { useThemeStore } from './stores/themeStore'
 import { useFontSizeStore, scaledUiPx, type FontSizePreset } from './stores/fontSizeStore'
@@ -9,6 +12,19 @@ import { NAIVE_DENSITY_BASE } from './design/layoutDensity'
 
 const themeStore = useThemeStore()
 const fontSizeStore = useFontSizeStore()
+const searchOpen = ref(false)
+
+function onKeydown(e: KeyboardEvent) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault()
+    searchOpen.value = true
+  }
+}
+
+// Register global keyboard listener
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', onKeydown)
+}
 
 const naiveTheme = computed(() =>
   themeStore.isDark ? darkTheme : undefined
@@ -161,20 +177,59 @@ const themeOverrides = computed<GlobalThemeOverrides>(() => {
     :theme="naiveTheme"
     :theme-overrides="themeOverrides"
   >
-    <n-message-provider>
+    <n-message-provider :placement="'bottom-right'" :max="3">
       <n-dialog-provider>
+        <!-- Top Navbar -->
+        <header class="app-shell-navbar" v-if="$route.name !== 'Home'">
+          <n-space align="center">
+            <span class="app-logo" @click="$router.push('/')">📖 <strong>墨枢</strong><span class="app-version">v3</span></span>
+            <n-tag :bordered="false" size="tiny" type="success" v-if="$route.params.slug">
+              {{ String($route.params.slug).slice(0, 18) }}
+            </n-tag>
+          </n-space>
+          <n-space align="center" :size="4">
+            <n-button text size="small" @click="searchOpen = true" :title="'Ctrl+K 搜索'">
+              <template #icon><n-icon><SearchOutline /></n-icon></template>
+            </n-button>
+            <n-button text size="small" @click="themeStore.toggleTheme()" :title="themeStore.isDark ? '切换亮色' : '切换暗色'">
+              {{ themeStore.isDark ? '☀️' : '🌙' }}
+            </n-button>
+            <n-button text size="small" @click="$router.push('/dashboard')" title="写作仪表盘">📊</n-button>
+          </n-space>
+        </header>
+
         <router-view v-slot="{ Component }">
           <transition name="app-fade" mode="out-in">
             <component :is="Component" />
           </transition>
         </router-view>
         <AppSettingsModal />
+        <GlobalSearch v-model="searchOpen" />
+        <ShortcutHelp />
       </n-dialog-provider>
     </n-message-provider>
   </n-config-provider>
 </template>
 
 <style>
+/* ── App Shell Navbar ── */
+.app-shell-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 42px;
+  padding: 0 1rem;
+  background: var(--body-color);
+  border-bottom: 1px solid var(--divider-color);
+  backdrop-filter: blur(8px);
+  -webkit-app-region: drag;
+  z-index: 50;
+}
+.app-shell-navbar button { -webkit-app-region: no-drag; }
+.app-logo { cursor: pointer; user-select: none; font-size: 0.95rem; }
+.app-version { font-size: 0.65rem; color: var(--text-color-muted); margin-left: 0.25rem; }
+
+/* ── Route transitions ── */
 .app-fade-enter-active,
 .app-fade-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
