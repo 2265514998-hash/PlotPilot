@@ -31,7 +31,7 @@ export default defineConfig({
     proxy: {
       // 代理到后端服务器（开发默认 8010；8005 被占用时可改回）
       '/api': {
-        target: 'http://127.0.0.1:8005',
+        target: 'http://127.0.0.1:8010',
         changeOrigin: true,
         ws: true,
         // SSE 长连接，避免代理过早断开
