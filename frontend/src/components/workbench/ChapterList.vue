@@ -67,6 +67,19 @@
           @tree-loaded="handleTreeLoaded"
         />
       </div>
+      <!-- 大纲树视图：Binder 风格可折叠树形章节列表 -->
+      <div v-else-if="viewMode === 'binder'">
+        <ChapterTreePanel
+          :slug="slug"
+          :nodes="binderNodes"
+          :current-chapter-id="currentChapterId"
+          @select="handleChapterClick"
+          @reorder="handleReorder"
+          @rename="handleRename"
+          @delete="handleDeleteChapter"
+          @insert="handleInsertAfter"
+        />
+      </div>
     </n-scrollbar>
 
     <!-- 引导用户使用全托管 -->
@@ -87,6 +100,7 @@
 <script setup lang="ts">
 import { ref, computed, type ComponentPublicInstance } from 'vue'
 import StoryStructureTree from '@/components/StoryStructureTree.vue'
+import ChapterTreePanel from '@/components/workbench/ChapterTreePanel.vue'
 import MacroPlanModal from '@/components/workbench/MacroPlanModal.vue'
 import type { GenerationPrefsDTO } from '@/api/novel'
 import { narrativeOrdinalLabel, narrativeUnitNoun } from '@/utils/narrativeUnitLabel'
@@ -124,6 +138,7 @@ const emit = defineEmits<{
 const viewMode = ref('tree')
 const viewModeOptions = [
   { label: '树形视图', value: 'tree' },
+  { label: '大纲树', value: 'binder' },
   { label: '平铺视图', value: 'flat' }
 ]
 
@@ -172,6 +187,23 @@ const handlePlanAct = (id: string, title: string) => {
 const handleTreeLoaded = (hasData: boolean) => {
   hasStructure.value = hasData
 }
+
+// ── Binder nodes ──
+interface TreeNode { id: number; label: string; icon?: string; wordCount: number; children?: TreeNode[] }
+
+const binderNodes = computed<TreeNode[]>(() =>
+  props.chapters.map(ch => ({
+    id: ch.id,
+    label: narrativeOrdinalLabel(ch.number, props.generationPrefs) + (ch.title ? ` · ${ch.title}` : ''),
+    icon: ch.word_count > 0 ? '✅' : '📝',
+    wordCount: ch.word_count,
+  }))
+)
+
+const handleReorder = (_fromIdx: number, _toIdx: number) => emit('refresh')
+const handleRename = (_id: number, _title: string) => emit('refresh')
+const handleDeleteChapter = (_id: number) => emit('refresh')
+const handleInsertAfter = (_idx: number) => emit('refresh')
 
 </script>
 
