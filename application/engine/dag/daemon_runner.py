@@ -208,7 +208,7 @@ class EngineSelector:
 
     def __init__(self):
         self.dag_enabled = os.getenv(
-            "ENABLE_DAG_ENGINE", "false"
+            "ENABLE_DAG_ENGINE", "true"
         ).lower() in ("1", "true", "yes")
         self._novel_flags: Dict[str, bool] = {}
 
