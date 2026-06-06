@@ -135,7 +135,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useNarrativeHealthStore } from '../../stores/narrativeHealthStore'
-import type { EChartsOption } from 'echarts/core'
+import type { EChartsCoreOption } from 'echarts/core'
 
 const props = defineProps<{
   novelId: string
@@ -197,7 +197,7 @@ function renderChart() {
   import('echarts/core').then(({ init: echartsInit }) => {
     if (chartInstance) chartInstance.dispose()
     chartInstance = echartsInit(chartRef.value)
-    const option: EChartsOption = {
+    const option: EChartsCoreOption = {
       tooltip: { trigger: 'axis' },
       legend: { data: ['综合', '情节', '情感', '节奏'], bottom: 0, textStyle: { fontSize: 11 } },
       grid: { top: 10, bottom: 30, left: 35, right: 10 },

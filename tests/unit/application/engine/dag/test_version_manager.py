@@ -1,5 +1,9 @@
 """DAG 版本管理器测试"""
 import pytest
+
+# 确保节点注册表已加载（触发 @NodeRegistry.register 副作用）
+import application.engine.dag.nodes  # noqa: F401
+
 from unittest.mock import Mock, MagicMock
 from application.engine.dag.models import DAGDefinition, NodeDefinition, get_default_dag
 from application.engine.dag.version_manager import DAGVersionManager

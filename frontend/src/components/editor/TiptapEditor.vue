@@ -89,7 +89,7 @@
     <!-- 编辑器内容 -->
     <div style="position: relative">
       <editor-content :editor="editor" class="tiptap-content" />
-      <AIWritingAssist ref="aiAssistRef" :editor="editor" />
+      <AIWritingAssist ref="aiAssistRef" :editor="editor ?? null" />
     </div>
 
     <!-- 底部状态栏 -->
@@ -133,7 +133,6 @@ const editor = useEditor({
   extensions: [
     StarterKit.configure({
       heading: { levels: [2, 3] },
-      history: { depth: 100 },
     }),
     Placeholder.configure({
       placeholder: props.placeholder || '开始写作…\n\nCtrl+S 保存 · 自动保存约 30 秒',
@@ -172,7 +171,7 @@ watch(() => props.modelValue, (newVal) => {
   const current = editor.value.getText()
   if (newVal !== current) {
     // 避免光标跳动：仅在内容确实不同时更新
-    editor.value.commands.setContent(newVal || '', false)
+    editor.value.commands.setContent(newVal || '', { emitUpdate: false })
   }
 })
 

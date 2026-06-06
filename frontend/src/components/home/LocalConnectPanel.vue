@@ -91,6 +91,7 @@ import { useMessage } from 'naive-ui'
 import {
   localWorkspaceApi,
   type ScanCandidate,
+  type HealthProbeItem,
 } from '@/api/localWorkspace'
 import { useLocalModelStore } from '@/stores/localModelStore'
 
@@ -134,9 +135,9 @@ async function runScan() {
   scanning.value = true
   scannedOnce.value = true
   try {
-    const { data } = await localWorkspaceApi.scan([path])
+    const data = await localWorkspaceApi.scan([path])
     scanWarnings.value = data.warnings || []
-    candidates.value = (data.candidates || []).filter((c) => c.kind === 'manuscript_folder')
+    candidates.value = (data.candidates || []).filter((c: ScanCandidate) => c.kind === 'manuscript_folder')
     if (!candidates.value.length && data.candidates?.length) {
       candidates.value = data.candidates
     }
@@ -159,7 +160,7 @@ async function runConnect(c: ScanCandidate) {
   connecting.value = true
   connectTarget.value = c.path
   try {
-    const { data } = await localWorkspaceApi.connect(c.path, c.title_guess)
+    const data = await localWorkspaceApi.connect(c.path, c.title_guess)
     message.success(`已导入 ${data.imported_chapters} 章：${data.title}`)
     await router.push({
       name: 'Workbench',
@@ -177,8 +178,8 @@ async function runConnect(c: ScanCandidate) {
 async function runProbe() {
   probing.value = true
   try {
-    const { data } = await localWorkspaceApi.healthProbe()
-    const hit = data.probes?.find((p) => p.reachable)
+    const data = await localWorkspaceApi.healthProbe()
+    const hit = data.probes?.find((p: HealthProbeItem) => p.reachable)
     probeOk.value = !!hit
     probeHint.value = hit
       ? `后端已连接：${hit.base_url}（${hit.detail}）`

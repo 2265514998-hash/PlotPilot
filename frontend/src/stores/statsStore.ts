@@ -66,7 +66,8 @@ export const useStatsStore = defineStore('stats', () => {
     error.value = null
 
     try {
-      const data = await statsApi.getGlobal()
+      const res = await statsApi.getGlobal()
+      const data = res.data
       globalStats.value = data
       return data
     } catch (err) {
@@ -119,7 +120,8 @@ export const useStatsStore = defineStore('stats', () => {
     error.value = null
 
     try {
-      const data = await statsApi.getChapter(slug, chapterId)
+      const res = await statsApi.getChapter(slug, chapterId)
+      const data = res.data
       chapterStatsCache.value.set(cacheKey, data)
       return data
     } catch (err) {
@@ -147,7 +149,8 @@ export const useStatsStore = defineStore('stats', () => {
     error.value = null
 
     try {
-      const data = await statsApi.getProgress(slug, days)
+      const res = await statsApi.getProgress(slug, days)
+      const data = res.data
       progressCache.value.set(cacheKey, data)
       return data
     } catch (err) {

@@ -1124,6 +1124,11 @@ function handleAutopilotDeskRefreshFromStream() {
   emitDeskRefreshDebounced()
 }
 
+/** 驾驶舱章节选择回调 */
+function onSidebarChapterSelect(chapterId: number, _title: string) {
+  currentChapterId.value = chapterId
+}
+
 /** 自动驾驶章节内容流更新：实时显示正在写作的内容 */
 const streamingChapterNumber = ref<number | null>(null)
 const streamingContent = ref('')

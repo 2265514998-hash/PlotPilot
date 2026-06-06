@@ -1,5 +1,9 @@
 """DAG 验证器测试"""
 import pytest
+
+# 确保节点注册表已加载（触发 @NodeRegistry.register 副作用）
+import application.engine.dag.nodes  # noqa: F401
+
 from application.engine.dag.models import (
     DAGDefinition,
     EdgeCondition,

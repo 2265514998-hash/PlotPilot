@@ -104,7 +104,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { init as echartsInit, graphic as echartsGraphic } from 'echarts/core'
-import type { ECharts, EChartsOption } from 'echarts/core'
+import type { ECharts, EChartsCoreOption } from 'echarts/core'
 import { monitorApi } from '../../api/monitor'
 import type { TensionCurveStats } from '../../api/monitor'
 import { isRequestCanceled } from '../../utils/requestCancel'
@@ -305,7 +305,7 @@ function renderChart() {
   // 未评估章节用虚线连接，已评估用实线
   const evaluatedFlags = tensionData.value.map((d) => d.evaluated)
 
-  const option: EChartsOption = {
+  const option: EChartsCoreOption = {
     grid: {
       left: 36,
       right: 16,

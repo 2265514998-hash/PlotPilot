@@ -102,15 +102,15 @@ export function consumeSseStream(opts: SseConsumerOptions): AbortController {
 
   void (async () => {
     try {
+      const { signal: _unused, ...init } = (opts.requestInit ?? {})
       const res = await fetch(opts.url, {
-        signal: ctrl.signal,
+        signal: _unused ?? ctrl.signal,
         headers: {
           'Accept': 'text/event-stream',
           'Cache-Control': 'no-cache',
-          ...opts.requestInit?.headers,
+          ...init.headers,
         },
-        ...opts.requestInit,
-        signal: opts.requestInit?.signal ?? ctrl.signal,
+        ...init,
       })
 
       if (!res.ok || !res.body) {

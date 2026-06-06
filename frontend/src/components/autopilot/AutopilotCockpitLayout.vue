@@ -32,10 +32,10 @@
           :novel-id="novelId"
           embedded-cockpit
           @status-change="onStatusChange"
-          @chapter-content-update="(d) => emit('chapter-content-update', d)"
-          @chapter-chunk="(d) => emit('chapter-chunk', d)"
+          @chapter-content-update="(d: any) => emit('chapter-content-update', d)"
+          @chapter-chunk="(d: any) => emit('chapter-chunk', d)"
           @desk-refresh="emit('desk-refresh')"
-          @beats-planned="(p) => emit('beats-planned', p)"
+          @beats-planned="(p: any) => emit('beats-planned', p)"
         />
       </div>
     </main>
