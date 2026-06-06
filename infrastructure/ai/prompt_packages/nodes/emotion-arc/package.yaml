@@ -1,0 +1,8 @@
+id: emotion-arc
+name: 情感弧线追踪
+version: "1.0"
+category: validation
+description: 追踪每个主要角色的情感状态，生成跨章情感轨迹，检测情感平坦区段
+inputs: [narrative_events, character_names, previous_arc, chapter_number]
+outputs: [character_emotions, emotional_arc, flat_segments, arc_deviations]
+model_preference: fast

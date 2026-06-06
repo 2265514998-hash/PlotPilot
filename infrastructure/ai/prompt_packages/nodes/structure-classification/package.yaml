@@ -1,0 +1,8 @@
+id: structure-classification
+name: 章节结构分类
+version: "1.0"
+category: validation
+description: 分析叙事事件流，自动分类章节在故事结构中的角色位置
+inputs: [narrative_events, chapter_number, total_chapters, novel_genre]
+outputs: [structural_role, act_phase, story_beat, confidence]
+model_preference: fast

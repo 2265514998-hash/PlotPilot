@@ -1,0 +1,8 @@
+id: theme-drift
+name: 主题漂移检测
+version: "1.0"
+category: validation
+description: 基于向量搜索追踪跨章节主题一致性，检测主题漂移和关键母题遗忘
+inputs: [theme_keywords, chapter_content, theme_vector, threshold]
+outputs: [drift_score, missing_themes, weakened_themes, suggestion]
+model_preference: fast

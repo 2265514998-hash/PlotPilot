@@ -1,0 +1,8 @@
+id: plot-hole-detection
+name: 情节漏洞检测
+version: "1.0"
+category: validation
+description: 基于知识图谱三元组进行跨章节矛盾检测，识别情节漏洞和时间线冲突
+inputs: [knowledge_triples, causal_edges, timeline_entries, foreshadow_registry, chapter_content]
+outputs: [plot_holes, severity, suggested_fixes]
+model_preference: standard

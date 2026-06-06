@@ -8,6 +8,7 @@ const Cast = () => import('../views/Cast.vue')
 const CharacterGraph = () => import('../views/CharacterGraph.vue')
 const LocationGraph = () => import('../views/LocationGraph.vue')
 const Corkboard = () => import('../views/Corkboard.vue')
+const NarrativeHealth = () => import('../views/NarrativeHealth.vue')
 const CharacterSchedulerSimulator = () =>
   import('../components/debug/CharacterSchedulerSimulator.vue')
 
@@ -22,6 +23,7 @@ const router = createRouter({
     { path: '/book/:slug/characters', name: 'CharacterGraph', component: CharacterGraph },
     { path: '/book/:slug/location-graph', name: 'LocationGraph', component: LocationGraph },
     { path: '/book/:slug/corkboard', name: 'Corkboard', component: Corkboard },
+    { path: '/book/:slug/narrative-health', name: 'NarrativeHealth', component: NarrativeHealth },
     {
       path: '/debug/scheduler',
       name: 'CharacterSchedulerSimulator',

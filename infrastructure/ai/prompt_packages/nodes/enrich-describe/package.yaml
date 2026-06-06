@@ -1,0 +1,8 @@
+id: enrich-describe
+name: 细节增强器（五感描写）
+version: "1.0"
+category: generation
+description: Sudowrite Describe 等价功能——为指定段落注入五感细节，增强场景沉浸感
+inputs: [selected_text, sense_focus, intensity_level]
+outputs: [enriched_text, changes_summary]
+model_preference: fast

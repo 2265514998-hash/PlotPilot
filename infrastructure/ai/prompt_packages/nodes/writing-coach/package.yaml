@@ -1,0 +1,8 @@
+id: writing-coach
+name: 智能写作教练
+version: "1.0"
+category: review
+description: 不代替写作，以提问式引导方式给出2-3条可执行建议，覆盖感官描写、节奏、角色深度、冲突强度
+inputs: [chapter_content, tension_scores, drift_score, character_states, beat_focus, chapter_number]
+outputs: [suggestions, priority_tags, auto_actions]
+model_preference: fast

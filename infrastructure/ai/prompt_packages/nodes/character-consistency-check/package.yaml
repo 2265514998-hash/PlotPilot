@@ -1,0 +1,8 @@
+id: character-consistency-check
+name: 角色一致性检查
+version: "1.0"
+category: validation
+description: 自动检测章节中的角色OOC（性格崩塌）、能力矛盾、知识矛盾、关系矛盾
+inputs: [chapter_content, character_states, chapter_characters, bible_characters]
+outputs: [violations, ooc_score, severity_levels]
+model_preference: standard

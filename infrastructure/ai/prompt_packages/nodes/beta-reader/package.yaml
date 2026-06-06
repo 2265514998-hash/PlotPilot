@@ -1,0 +1,8 @@
+id: beta-reader
+name: AI β读者（预读反馈）
+version: "1.0"
+category: review
+description: 模拟三种读者视角，预先提供阅读体验反馈，帮助作者在发布前调整内容
+inputs: [chapter_content, reader_persona, chapter_number, previous_summary]
+outputs: [reading_experience, concerns, highlights, readability_score]
+model_preference: standard
