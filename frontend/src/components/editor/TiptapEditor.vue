@@ -146,6 +146,9 @@ const emit = defineEmits<{
 const { active: focusActive, toggle: toggleFocus, exit: exitFocus } = useFocusMode()
 const { suggestion: aiSuggestion, request: requestAI, accept: acceptAI, dismiss: dismissAI } = useAICompletion()
 
+const isFocused = ref(false)
+const aiAssistRef = ref<any>(null)
+
 const slashOpen = ref(false)
 const slashQuery = ref('')
 const aiPanelOpen = ref(false)

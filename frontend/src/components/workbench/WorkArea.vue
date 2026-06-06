@@ -758,6 +758,7 @@ function ordinalUnit(n: number) {
 
 const emit = defineEmits<{
   chapterUpdated: []
+  'chapter-select': [chapterId: number, title: string]
 }>()
 
 const message = useMessage()
@@ -1126,7 +1127,7 @@ function handleAutopilotDeskRefreshFromStream() {
 
 /** 驾驶舱章节选择回调 */
 function onSidebarChapterSelect(chapterId: number, _title: string) {
-  currentChapterId.value = chapterId
+  emit('select', chapterId, _title)
 }
 
 /** 自动驾驶章节内容流更新：实时显示正在写作的内容 */

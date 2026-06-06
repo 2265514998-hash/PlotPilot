@@ -191,7 +191,7 @@ const themeOverrides = computed<GlobalThemeOverrides>(() => {
             <n-button text size="small" @click="searchOpen = true" :title="'Ctrl+K 搜索'">
               <template #icon><n-icon><SearchOutline /></n-icon></template>
             </n-button>
-            <n-button text size="small" @click="themeStore.toggleTheme()" :title="themeStore.isDark ? '切换亮色' : '切换暗色'">
+            <n-button text size="small" @click="themeStore.setTheme(themeStore.isDark ? 'light' : 'dark')" :title="themeStore.isDark ? '切换亮色' : '切换暗色'">
               {{ themeStore.isDark ? '☀️' : '🌙' }}
             </n-button>
             <n-button text size="small" @click="$router.push('/dashboard')" title="写作仪表盘">📊</n-button>
