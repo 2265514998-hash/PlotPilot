@@ -21,7 +21,7 @@
             <span class="streak-flame">{{ streak > 0 ? '🔥' : '💤' }}</span>
             <p class="stat-number">{{ streak }}</p>
             <p class="stat-label">连续天数</p>
-            <n-tag :type="streak >= 7 ? 'success' : (streak >= 3 ? 'warning' : 'default') as any" size="small">
+            <n-tag :type="(streak >= 7 ? 'success' : streak >= 3 ? 'warning' : 'default') as any" size="small">
               {{ streakMessage }}
             </n-tag>
           </div>
