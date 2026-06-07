@@ -2,36 +2,27 @@
 cd /d "D:\PlotPilot"
 title PlotPilot
 
-echo ======================================
-echo   PlotPilot
-echo ======================================
+echo Starting PlotPilot...
 
-rem clean ports
-for /f "tokens=5" %%a in ('netstat -ano 2^>nul ^| find ":8005" ^| find "LISTENING"') do taskkill /f /pid %%a 2>nul
-for /f "tokens=5" %%a in ('netstat -ano 2^>nul ^| find ":3000" ^| find "LISTENING"') do taskkill /f /pid %%a 2>nul
-timeout /t 1 /nobreak >nul
+rem start backend with PYTHONPATH set
+set PYTHONPATH=D:\PlotPilot
+set PLOTPILOT_SKIP_PROCESS_CLEANUP=1
+start "PlotPilot-Backend" /min .venv\Scripts\python.exe -m uvicorn interfaces.main:app --host 0.0.0.0 --port 8005
 
-rem start backend
-start "PlotPilot-API" /min .venv\Scripts\python.exe -m uvicorn interfaces.main:app --host 0.0.0.0 --port 8005
+rem wait for backend to be ready (max 30 seconds)
+echo Waiting for backend...
+set /a n=0
+:wait
+timeout /t 2 /nobreak >nul
+set /a n+=1
+powershell -NoProfile -Command "try {$r=Invoke-WebRequest http://127.0.0.1:8005/health -UseBasicParsing -TimeoutSec 2; if($r.StatusCode -eq 200){exit 0}}catch{exit 1}" >nul 2>&1
+if %errorlevel% neq 0 (
+  if %n% lss 15 goto wait
+)
 
-rem start frontend
-cd frontend
-start "PlotPilot-UI" /min cmd /c "npx vite --host 0.0.0.0 --port 3000"
-cd ..
+rem launch native desktop app
+start "" "D:\PlotPilot\frontend\src-tauri\target\release\plotpilot.exe"
 
-echo Starting services...
 echo.
-
-rem wait and open browser
-timeout /t 6 /nobreak >nul
-start http://127.0.0.1:3000
-
-echo ======================================
-echo   Ready - http://127.0.0.1:3000
-echo   Close this window to stop
-echo ======================================
-pause >nul
-
-rem cleanup
-for /f "tokens=5" %%a in ('netstat -ano 2^>nul ^| find ":8005" ^| find "LISTENING"') do taskkill /f /t /pid %%a 2>nul
-for /f "tokens=5" %%a in ('netstat -ano 2^>nul ^| find ":3000" ^| find "LISTENING"') do taskkill /f /t /pid %%a 2>nul
+echo PlotPilot launched!
+timeout /t 2 /nobreak >nul
